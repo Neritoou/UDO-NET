@@ -1,0 +1,128 @@
+name: Verificar propiedad de módulo
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+      - 'module_*/**'
+
+jobs:
+  check-ownership:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verificar Rama
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const integradores = [
+              'Gabriel66-ux',
+              'Neritoou',
+              'odetax',
+              'AlephXD',
+              'DiGiorgio-L',
+              'Dano-jp',
+              'kems0712'
+            ];
+
+            const author = context.payload.pull_request.user.login;
+            const targetBranch = context.payload.pull_request.base.ref;
+            const sourceBranch = context.payload.pull_request.head.ref;
+
+            // Los integradores pueden tocar todo
+            if (integradores.includes(author)) {
+              console.log(`[PASS] ${author} es integrador, tiene acceso total.`);
+              return;
+            }
+
+            // Bloquear PRs de no-integradores hacia main
+            if (targetBranch === 'main') {
+              core.setFailed(
+                `[FAIL] ${author} no tiene permisos para crear PRs hacia main.\n` +
+                `Solo los integradores pueden mergear a main.\n` +
+                `Envía tu PR hacia develop.`
+              );
+              return;
+            }
+
+            // Bloquear PRs de no-integradores hacia ramas de módulo
+            if (targetBranch !== 'develop') {
+              core.setFailed(
+                `[FAIL] ${author} está intentando crear un PR hacia "${targetBranch}".\n` +
+                `Solo puedes crear PRs hacia develop.\n` +
+                `Cambia el destino de tu PR a develop.`
+              );
+              return;
+            }
+
+            // MAPA DE PERMISOS
+
+            const permisos = {
+              // Módulo 1 — Auth y Perfiles
+              'Frednat23': [
+                'module_1/auth_&_profile',
+              ],
+              'Cristian1414': [
+                'module_1/auth_&_profile',
+              ],
+              'Sebato785': [
+                'module_1/auth_&_profile',
+              ],
+
+              // Módulo 2 — Comunidades y Feed
+              'Aguilera2509': [
+                'module_2/communities_&_feed',
+              ],
+
+              // Módulo 3 — Publicaciones, Hilos y Buscador
+              'Alecsoc': [
+                'module_3/posts_&_threads',
+              ],
+              'Kurui02': [
+                'module_3/posts_&_threads',
+              ],
+
+              // Módulo 4 — Votación, Reputación y Notificaciones
+              'angelgrb0412': [
+                'module_4/votes_&_notifications',
+              ],
+              'Lui525': [
+                'module_4/votes_&_notifications',
+              ],
+              'Tenmyouji22': [
+                'module_4/votes_&_notifications',
+              ],
+
+              // Módulo 5 — Moderación, Reportes y Advertencias
+              'Gabo-skyder8': [
+                'module_5/moderation_&_reports',
+              ],
+              'JKun016': [
+                'module_5/moderation_&_reports',
+              ],
+              'Abrasha06': [
+                'module_5/moderation_&_reports',
+              ],
+            };
+
+            // Verificar que el usuario esté registrado
+            if (!permisos[author]) {
+              core.setFailed(
+                `[FAIL] El usuario "${author}" no está registrado en el mapa de permisos. ` +
+                `Contacta a los integradores para que te agreguen.`
+              );
+              return;
+            }
+
+            const ramasPermitidas = permisos[author];
+
+            if (!ramasPermitidas.includes(sourceBranch)) {
+              core.setFailed(
+                `[FAIL] ${author} está enviando un PR desde "${sourceBranch}".\n` +
+                `Tus ramas asignadas son: ${ramasPermitidas.join(', ')}\n` +
+                `Trabaja en una de tus ramas y crea el PR desde ahí.`
+              );
+              return;
+            }
+
+            console.log(`[PASS] ${author} está trabajando desde su rama asignada.`);
