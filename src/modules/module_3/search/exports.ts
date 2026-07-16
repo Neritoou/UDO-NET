@@ -1,2 +1,2 @@
-// Funciones expuestas para otros módulos
-// export { searchPosts, getRelatedPosts } from './services/search.service'
+export { searchPosts } from '@module_3/search/actions/search';
+export { default as SearchInput } from '@module_3/search/components/SearchInput';
