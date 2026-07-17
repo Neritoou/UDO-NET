@@ -203,5 +203,24 @@
         "url": "https://cdn.fastly.steamstatic.com/store/home/store_home_share.jpg"
       }
     }
+  },
+  {
+    "id": "post_5109c6f3",
+    "title": "adfdsf",
+    "content": "adfdsf",
+    "community": "General",
+    "tags": [
+      "general"
+    ],
+    "author": {
+      "username": "Joyce Valerio"
+    },
+    "createdAt": "2026-07-17T02:01:24.579Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": [],
+    "links": [],
+    "linkMetadata": null
   }
 ]

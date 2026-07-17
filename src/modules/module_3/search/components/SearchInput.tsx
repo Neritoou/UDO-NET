@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface SearchInputProps {
   placeholder?: string;
@@ -9,8 +9,15 @@ interface SearchInputProps {
 }
 
 export default function SearchInput({ placeholder = "Busca por título, comunidad o tag...", targetPath = "/" }: SearchInputProps) {
-  const [term, setTerm] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryParam = searchParams.get('q') || '';
+  
+  const [term, setTerm] = useState(queryParam);
+
+  useEffect(() => {
+    setTerm(searchParams.get('q') || '');
+  }, [searchParams]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

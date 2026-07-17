@@ -104,9 +104,13 @@ graph LR
 ```
 
 ### Paso 1: Colocar la caja de búsqueda (ej. en el Header)
-Importa `SearchInput` y configúralo con el `targetPath` hacia donde quieres enviar la búsqueda:
+Importa `SearchInput` y configúralo con el `targetPath` hacia donde quieres enviar la búsqueda. 
+
+> [!NOTE]
+> Como `SearchInput` se sincroniza automáticamente con el parámetro `q` de la URL, debe ir envuelto en un bloque `<Suspense>` si se renderiza en componentes o layouts estáticos.
 
 ```tsx
+import { Suspense } from 'react';
 import { SearchInput } from '@/modules/module_3/exports';
 
 export default function Header() {
@@ -114,24 +118,56 @@ export default function Header() {
     <header className="flex items-center justify-between p-4 bg-black">
       <span>UdoNET</span>
       {/* Envía al usuario a /posts?q=busqueda */}
-      <SearchInput targetPath="/posts" placeholder="Buscar en el foro..." />
+      <Suspense fallback={<div>Cargando...</div>}>
+        <SearchInput targetPath="/posts" placeholder="Buscar en el foro..." />
+      </Suspense>
     </header>
   );
 }
 ```
 
-### Paso 2: Renderizar el listado en la página de destino
-En la página de destino (en este ejemplo, `/posts`), coloca el componente `PostList`. Este lee la URL en segundo plano y se refresca solo:
+### Paso 2: Renderizar la búsqueda, filtros y vista de hilos en la página de destino
+En la página de destino (en este ejemplo, `/posts`), puedes integrar el buscador completo (`SearchBox`), el listado (`PostList`) y la vista de detalles del hilo (`ThreadView`) gestionando un estado local para la navegación. 
+
+> **IMPORTANTE**: Debes envolver los componentes que lean parámetros de búsqueda (como `SearchBox` y `PostList`) en un bloque `<Suspense>` de React. De lo contrario, Next.js arrojará un error de compilación al generar las páginas estáticas.
 
 ```tsx
-import { PostList } from '@/modules/module_3/exports';
+"use client";
+
+import { useState, Suspense } from 'react';
+import { SearchBox, PostList, ThreadView } from '@/modules/module_3/exports';
+
+function PostsContent() {
+  const [selectedThread, setSelectedThread] = useState<string | null>(null);
+
+  // Si hay un hilo seleccionado, renderiza la vista de conversación
+  if (selectedThread) {
+    return (
+      <main className="max-w-4xl mx-auto p-6">
+        <ThreadView threadId={selectedThread} onBack={() => setSelectedThread(null)} />
+      </main>
+    );
+  }
+
+  // De lo contrario, muestra el buscador con filtros y la lista de posts
+  return (
+    <main className="max-w-4xl mx-auto p-6 space-y-6">
+      {/* Buscador completo con select de filtros (más votados, recientes, etc.) */}
+      <SearchBox />
+      
+      <h1 className="text-xl font-bold">Publicaciones</h1>
+      
+      {/* Lista de posts. Al hacer clic, guarda el ID del hilo para abrirlo */}
+      <PostList onSelectPost={(id) => setSelectedThread(id)} />
+    </main>
+  );
+}
 
 export default function PostsPage() {
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-xl font-bold mb-4">Publicaciones</h1>
-      <PostList onSelectPost={(id) => console.log('Abrir hilo:', id)} />
-    </div>
+    <Suspense fallback={<div className="p-12 text-center text-gray-500">Cargando publicaciones...</div>}>
+      <PostsContent />
+    </Suspense>
   );
 }
 ```

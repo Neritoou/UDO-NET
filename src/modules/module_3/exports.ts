@@ -3,11 +3,11 @@
 // Contenedor principal de la interfaz de usuario (composición)
 export { default as Module3Container } from './components/ModuleContainer';
 
-// Funciones expuestas para búsqueda
-export { searchPosts, SearchInput } from './search/exports';
+// Funciones y componentes expuestos para búsqueda
+export { searchPosts, SearchInput, SearchBox } from './search/exports';
 
-// Datos y tipos expuestos para posts/hilos
-export { mockPosts, PostList } from './posts/exports';
+// Datos, tipos y componentes expuestos para posts/hilos
+export { mockPosts, PostList, ThreadView } from './posts/exports';
 export type { MockPost, MockReply } from './posts/exports';
 
 // 4. Servicios y Factoría de Datos
