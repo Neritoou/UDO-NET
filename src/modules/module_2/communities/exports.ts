@@ -1,2 +1,10 @@
-// Funciones expuestas para otros módulos
-// export { getCommunityById, getCommunityBySlug, getUserCommunities, getSubcommunities } from './services/community.service'
+export {
+  getCommunityById,
+  getCommunityBySlug,
+  getAllCommunities,
+  getSubcommunities,
+  getUserMainCommunities,
+  getUserSubcommunities,
+  isUserSubscribed,
+  getCommunityMemberCount,
+} from './services/community.service'
