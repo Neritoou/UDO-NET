@@ -1,0 +1,226 @@
+[
+  {
+    "id": "post_005",
+    "title": "Inscripciones del nuevo semestre",
+    "content": "¿Alguien sabe cuándo empiezan las inscripciones para el próximo semestre?",
+    "community": "General",
+    "tags": [
+      "Inscripciones",
+      "UDO"
+    ],
+    "author": {
+      "username": "Maria_F"
+    },
+    "createdAt": "2026-06-25T09:00:00Z",
+    "votes": 10,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": []
+  },
+  {
+    "id": "post_eb871076",
+    "title": "Hola soy nuevo en esto del git y quiero ...",
+    "content": "Hola soy nuevo en esto del git y quiero saber si esta bien, me pueden corregir?, aparte me pueden revisar este archivo, les recomiendo primero hacerlo usar esta pagina para que vean que no tiene virus ",
+    "community": "General",
+    "tags": [
+      "Udo",
+      "Computacion"
+    ],
+    "author": {
+      "username": "Joyce Valerio"
+    },
+    "createdAt": "2026-07-02T16:04:34.041Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": []
+  },
+  {
+    "id": "post_b456c8bc",
+    "title": "hola soy nuevo en la creacion de repos e...",
+    "content": "hola soy nuevo en la creacion de repos en git necesito q me digan si lo hice bien ",
+    "community": "General",
+    "tags": [
+      "Udo",
+      "sistemas"
+    ],
+    "author": {
+      "username": "Keiber"
+    },
+    "createdAt": "2026-07-02T16:08:13.969Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": []
+  },
+  {
+    "id": "post_7c19682a",
+    "title": "hola soy nuevo con git me pueden decir s...",
+    "content": "hola soy nuevo con git me pueden decir si el repo esta bien?",
+    "community": "General",
+    "tags": [
+      "UDO",
+      "sistemas"
+    ],
+    "author": {
+      "username": "Keiber"
+    },
+    "createdAt": "2026-07-02T16:09:25.606Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": []
+  },
+  {
+    "id": "post_68682791",
+    "title": "hola soy de mecanica pero mi profesor qu...",
+    "content": "hola soy de mecanica pero mi profesor quiere que suba mis trabajos en git pero no se como manejar los repos, los de sistemas o de computacion me pueden ayudar? me dicen si mi repo esta bien o que puedo cambiar por favor, tengo que entregarle el git mas tarde el sabado a las 12:00am",
+    "community": "General",
+    "tags": [
+      "mecanica",
+      "sistemas",
+      "computacion"
+    ],
+    "author": {
+      "username": "Leonel"
+    },
+    "createdAt": "2026-07-02T16:34:19.283Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": [],
+    "links": [
+      "https://github.com/Kurui02/proyecto-tdah"
+    ],
+    "linkMetadata": {
+      "title": "GitHub - Kurui02/proyecto-tdah",
+      "description": "Contribute to Kurui02/proyecto-tdah development by creating an account on GitHub.",
+      "image": {
+        "url": "https://opengraph.githubassets.com/9e9f58346c206501174fedd1e950f6a49adeda2250e65d43fcc59bd2d7bdf652/Kurui02/proyecto-tdah"
+      }
+    }
+  },
+  {
+    "id": "post_200ee6d8",
+    "title": "hola mi nombre es pablo y hackee esta cu...",
+    "content": "hola mi nombre es pablo y hackee esta cuenta, este es mi ig si me quieren seguir ",
+    "community": "General",
+    "tags": [
+      "sistemas",
+      "general"
+    ],
+    "author": {
+      "username": "Maria_F"
+    },
+    "createdAt": "2026-07-04T13:21:03.941Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": [],
+    "links": [
+      "https://www.instagram.com/"
+    ],
+    "linkMetadata": {
+      "title": "Instagram",
+      "description": "",
+      "image": {
+        "url": ""
+      }
+    }
+  },
+  {
+    "id": "post_591f8d29",
+    "title": "post de prueba",
+    "content": "post de prueba",
+    "community": "General",
+    "tags": [
+      "udo",
+      "sistemas",
+      "ayuda"
+    ],
+    "author": {
+      "username": "Dano"
+    },
+    "createdAt": "2026-07-12T23:40:14.347Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": [],
+    "links": [
+      "https://github.com/Kurui02/Udonet"
+    ],
+    "linkMetadata": {
+      "title": "GitHub - Kurui02/Udonet",
+      "description": "Contribute to Kurui02/Udonet development by creating an account on GitHub.",
+      "image": {
+        "url": "https://opengraph.githubassets.com/dcf6e2d8b121c261ed298b80423b18f5b946727754e00f6977e690a5ffc08354/Kurui02/Udonet"
+      }
+    }
+  },
+  {
+    "id": "post_9b23161d",
+    "title": "porque teniamos dos archivos que hacian ...",
+    "content": "porque teniamos dos archivos que hacian lo mismo????",
+    "community": "General",
+    "tags": [
+      "sistemas",
+      "udo"
+    ],
+    "author": {
+      "username": "Nepthali"
+    },
+    "createdAt": "2026-07-15T18:17:56.099Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": [],
+    "links": [],
+    "linkMetadata": null
+  },
+  {
+    "id": "post_07332dc1",
+    "title": "asdasd",
+    "content": "asdasd",
+    "community": "General",
+    "tags": [
+      "general"
+    ],
+    "author": {
+      "username": "Keiber"
+    },
+    "createdAt": "2026-07-16T04:35:17.726Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": [],
+    "links": [
+      "https://store.steampowered.com/?l=spanish"
+    ],
+    "linkMetadata": {
+      "title": "Steam Store",
+      "description": "Steam is the ultimate destination for playing, discussing, and creating games.",
+      "image": {
+        "url": "https://cdn.fastly.steamstatic.com/store/home/store_home_share.jpg"
+      }
+    }
+  },
+  {
+    "id": "post_5109c6f3",
+    "title": "adfdsf",
+    "content": "adfdsf",
+    "community": "General",
+    "tags": [
+      "general"
+    ],
+    "author": {
+      "username": "Joyce Valerio"
+    },
+    "createdAt": "2026-07-17T02:01:24.579Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": [],
+    "links": [],
+    "linkMetadata": null
+  }
+]
