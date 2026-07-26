@@ -1,73 +1,105 @@
 'use server'; // 👈 Obligatorio al inicio del archivo
 
 import { createClient } from '@/lib/db/server';
-import type { MarkReadPayload } from '@/modules/module_4/types';
+import { calculateWeight } from '@/modules/module_4/votes/utils/calculateWeight';
+import { createNotification } from '@/modules/module_4/notifications/utils/triggerEvent';
+import type { VotePayload } from '@/modules/module_4/types';
+import { revalidatePath } from 'next/cache'; // 👈 IMPORTANTE para actualizar la UI
 
 /**
- * Obtiene las últimas 20 notificaciones del usuario actual,
- * ordenadas por fecha de creación descendente.
+ * Registra un voto (upvote/downvote) en una respuesta usando Server Actions.
  */
-export async function getNotifications(currentUserId: string) {
+export async function castVote(payload: VotePayload) {
   try {
+    const { replyId, value } = payload;
+
+    // Validar el payload de entrada
+    if (!replyId || (value !== 1 && value !== -1)) {
+      return { success: false, error: 'Payload inválido. Se requiere replyId y value (1 | -1).' };
+    }
+
+    // Configuración del usuario mock asignado directamente
+    const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001'; 
+    const currentUserId = MOCK_USER_ID;
+
     if (!currentUserId) {
       return { success: false, error: 'No se proporcionó el ID del usuario.' };
     }
 
     const supabase = await createClient();
 
-    const { data: notifications, error } = await supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', currentUserId)
-      .order('created_at', { ascending: false })
-      .limit(20);
+    // 1. Anti-Self-Voting: Consultar quién es el autor de la respuesta
+    const { data: reply, error: replyError } = await supabase
+      .from('replies')
+      .select('user_id')
+      .eq('id', replyId)
+      .single();
 
-    if (error) {
-      console.error('Error al consultar notificaciones:', error.message);
-      return { success: false, error: 'Error al obtener las notificaciones.' };
+    if (replyError || !reply) {
+      return { success: false, error: 'La respuesta especificada no existe.' };
     }
 
-    return { success: true, notifications };
+    if (reply.user_id === currentUserId) {
+      return { success: false, error: 'No puedes votar tu propio contenido.' };
+    }
+
+    // 2. Calcular peso dinámico del voto 
+    const weight = await calculateWeight(currentUserId);
+
+    // 3. UPSERT del voto 
+    const { data: vote, error: voteError } = await supabase
+      .from('votes')
+      .upsert(
+        {
+          user_id: currentUserId,
+          reply_id: replyId,
+          value,
+          weight,
+        },
+        {
+          onConflict: 'user_id,reply_id', // 👈 Requiere restricción UNIQUE en Postgres
+        }
+      )
+      .select()
+      .single();
+
+    if (voteError) {
+      console.error('Error al insertar/actualizar voto:', voteError.message);
+      return { success: false, error: 'Error al registrar el voto.' };
+    }
+
+    // 4. Actualizar el vote_count de la respuesta de forma segura
+    const { data: votesAgg, error: aggError } = await supabase
+      .from('votes')
+      .select('value, weight')
+      .eq('reply_id', replyId);
+
+    if (!aggError && votesAgg) {
+      const totalVoteCount = votesAgg.reduce(
+        (sum: number, v: { value: number; weight: number }) => sum + v.value * (v.weight || 1),
+        0
+      );
+
+      await supabase
+        .from('replies')
+        .update({ vote_count: Math.round(totalVoteCount) })
+        .eq('id', replyId);
+    }
+
+    // 5. Notificar al autor de la respuesta 
+    try {
+      await createNotification(reply.user_id, 'vote', replyId);
+    } catch (notifError) {
+      console.error('Error al enviar la notificación:', notifError);
+    }
+
+    // 6. Revalidar la caché bajo demanda para que la UI se actualice automáticamente
+    // Cambia '/' por la ruta específica de tus respuestas si aplica (ej: `/questions/${questionId}`)
+    revalidatePath('/', 'layout');
+
+    return { success: true, vote };
   } catch (error) {
-    console.error('Error inesperado en getNotifications:', error);
-    return { success: false, error: 'Error interno del servidor.' };
-  }
-}
-
-/**
- * Marca las notificaciones como leídas.
- * Si se envía un array de IDs, marca solo esas.
- * Si el array está vacío o no se envía, marca TODAS las del usuario.
- */
-export async function markNotificationsAsRead(currentUserId: string, payload: MarkReadPayload = {}) {
-  try {
-    if (!currentUserId) {
-      return { success: false, error: 'No se proporcionó el ID del usuario.' };
-    }
-
-    const supabase = await createClient();
-    const { notificationIds } = payload;
-
-    let query = supabase
-      .from('notifications')
-      .update({ is_read: true })
-      .eq('user_id', currentUserId);
-
-    // Si se proporcionan IDs específicos, filtrar por ellos
-    if (notificationIds && notificationIds.length > 0) {
-      query = query.in('id', notificationIds);
-    }
-
-    const { error } = await query;
-
-    if (error) {
-      console.error('Error al marcar notificaciones como leídas:', error.message);
-      return { success: false, error: 'Error al actualizar las notificaciones.' };
-    }
-
-    return { success: true, message: 'Notificaciones marcadas como leídas.' };
-  } catch (error) {
-    console.error('Error inesperado en markNotificationsAsRead:', error);
+    console.error('Error inesperado en castVote:', error);
     return { success: false, error: 'Error interno del servidor.' };
   }
 }
