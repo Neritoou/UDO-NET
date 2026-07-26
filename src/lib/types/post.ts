@@ -23,3 +23,13 @@ export type PostTag = {
   post_id: string
   tag_id: string
 }
+
+export type PostLink = {
+  id: string
+  post_id: string
+  url: string
+  title: string | null
+  description: string | null
+  image_url: string | null
+  created_at: string
+}
