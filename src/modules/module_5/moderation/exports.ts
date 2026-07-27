@@ -1,7 +1,7 @@
-// src/modules/module_5/moderation/exports.ts
+export { verifyContent } from "./utils/content-filter.util";
+export { verifyModeratorPermission } from "./utils/role-verification.util";
 
-export { verifyContent } from "./services/content-filter-service";
-export { verifyModeratorPermission } from "./services/role-verification-service";
+export type { VerificationResult } from "./utils/content-filter.util";
+export type { AuthorizationResult } from "./utils/role-verification.util";
 
-export type { VerificationResult } from "./services/content-filter-service";
-export type { AuthorizationResult } from "./services/role-verification-service";
+export { ThreadManagementService } from "./services/thread-management.service";
