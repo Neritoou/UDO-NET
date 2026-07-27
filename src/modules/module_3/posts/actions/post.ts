@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getLinkMetadata } from "@module_3/posts/actions/links"; 
-import { mockPosts, MockPost, getRandomUserProfile } from "@module_3/posts/services/mock-data"; 
+import { mockPosts, MockPost } from "@module_3/posts/services/mock-data"; 
 import { PostServiceFactory } from "@module_3/posts/services/factory";
 import fs from "fs/promises";
 import path from "path";
@@ -13,22 +13,61 @@ interface ActionResponse {
   error?: string;
 }
 
-const MAX_FILE_SIZE = 4194304; // 4MB en Bytes
-const JSON_FILE_PATH = path.join(process.cwd(), "src", "modules", "module_3", "posts", "services", "mock-posts-extra.json");
+export interface CommunityOption {
+  id: string;
+  name: string;
+}
 
+const JSON_FILE_PATH = path.join(
+  process.cwd(),
+  "src",
+  "modules",
+  "module_3",
+  "posts",
+  "services",
+  "mock-posts-extra.json"
+);
+
+/**
+ * Obtiene las comunidades que sigue el usuario autenticado para mostrarlas en la tarjeta/selector.
+ */
+export async function getUserJoinedCommunitiesAction(): Promise<CommunityOption[]> {
+  try {
+    //  AQUÍ UNIR BASE DE DATOS (Filtrar y retornar solo las comunidades que el usuario sigue)
+   
+    return [
+      { id: "General", name: "General" }
+    ];
+  } catch (error) {
+    console.error("Error al obtener las comunidades del usuario:", error);
+    return [{ id: "General", name: "General" }];
+  }
+}
+
+/**
+ * Acción para crear la publicación dirigida a la comunidad elegida por el usuario.
+ */
 export async function createPostAction(formData: FormData): Promise<ActionResponse> {
   try {
+    const title = (formData.get("title") as string) || "";
     const postText = (formData.get("postText") as string) || "";
     const detectedUrl = (formData.get("detectedUrl") as string) || "";
     const tagsInput = (formData.get("tags") as string) || "";
-    const file = formData.get("file") as File | null;
 
-    // 1. Validaciones básicas
+    // Obtenemos la comunidad seleccionada (de las que sigue el usuario). Si viene vacía, asignamos "General"
+    const community = ((formData.get("communityId") as string) || (formData.get("community") as string) || "General").trim();
+
+    // 1. Validación del título del post
+    if (!title.trim()) {
+      return { success: false, error: "El título de la publicación es obligatorio." };
+    }
+
+    // 2. Validación del texto del post
     if (!postText.trim()) {
       return { success: false, error: "El texto del post no puede estar vacío." };
     }
 
-    // 2. Validación de tags obligatorios
+    // 3. Validación de etiquetas (Tags)
     if (!tagsInput.trim()) {
       return { success: false, error: "Es obligatorio ingresar al menos un tag." };
     }
@@ -42,42 +81,54 @@ export async function createPostAction(formData: FormData): Promise<ActionRespon
       return { success: false, error: "Formato de tags inválido. Usa comas para separar." };
     }
 
-    // Procesamiento de archivos
-    if (file && file.size > 0) {
-      if (file.size > MAX_FILE_SIZE) {
-        return { success: false, error: "El archivo excede el tamaño máximo de 4MB." };
-      }
-    }
-
-    // Obtención de metadatos de URL
+    // 4. Obtención y procesamiento de metadatos de URL
     let finalMetadata = null;
-    if (detectedUrl) {
-      const metaResult = await getLinkMetadata(detectedUrl);
-      if (metaResult.success === 1 && metaResult.meta) {
-        finalMetadata = metaResult.meta;
+    const cleanUrl = detectedUrl.trim();
+
+    if (cleanUrl) {
+      try {
+        const metaResult = (await getLinkMetadata(cleanUrl)) as {
+          success?: number;
+          meta?: any;
+        };
+
+        if (metaResult && metaResult.success === 1 && metaResult.meta) {
+          finalMetadata = metaResult.meta;
+        }
+      } catch (err) {
+        console.warn("No se pudieron obtener los metadatos de la URL, pero el link se conservará:", err);
       }
     }
+    // 5. Datos del usuario autenticado
+   // AQUÍ UNIR BASE DE DATOS (Obtener usuario autenticado desde la sesión/BD)
+    const currentUser = {
+      id: "user_created_123",
+      username: "UsuarioRegistrado",
+      avatar: "" // Dejar vacío para renderizar el círculo blanco si aún no tiene avatar en BD
+    };
 
-    const authorProfile = await getRandomUserProfile();
-
-    // Estructura completa guardando Links y Metadata
+    // 6. Construcción del objeto de la nueva publicación
     const newPost: MockPost = {
       id: `post_${crypto.randomUUID().substring(0, 8)}`,
-      title: postText.substring(0, 40) + (postText.length > 40 ? "..." : ""), 
+      title: title.trim(),
       content: postText,
-      community: "General", 
-      tags: tagsArray, 
-      author: { username: authorProfile.username },
+      community: community || "General",
+      tags: tagsArray,
+      author: {
+        id: currentUser.id, 
+        username: currentUser.username,
+        avatar: currentUser.avatar
+      },
       createdAt: new Date(),
       votes: 0,
       repliesCount: 0,
       status: "Abierto" as const,
       replies: [],
-      links: detectedUrl ? [detectedUrl] : [], // Almacenado como array en links
-      linkMetadata: finalMetadata            // Guardamos la miniatura scrapeada
+      links: cleanUrl ? [cleanUrl] : [],
+      linkMetadata: finalMetadata
     };
 
-    // Persistencia en JSON
+    // 7. Persistencia de datos en el archivo JSON
     let extraPosts: MockPost[] = [];
     try {
       const contenidoJson = await fs.readFile(JSON_FILE_PATH, "utf-8");
@@ -90,9 +141,9 @@ export async function createPostAction(formData: FormData): Promise<ActionRespon
     extraPosts.push(newPost);
     await fs.writeFile(JSON_FILE_PATH, JSON.stringify(extraPosts, null, 2), "utf-8");
 
-    // Sincronización en memoria y Revalidación de Next.js
+    // 8. Actualización del estado en memoria y revalidación de Next.js
     mockPosts.push(newPost);
-    revalidatePath("/"); 
+    revalidatePath("/");
 
     return { success: true, message: "Post creado correctamente." };
 
