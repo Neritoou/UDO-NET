@@ -22,11 +22,15 @@ export async function updateUserReputation(userId: string) {
     const supabase = await createClient();
 
     // 1. Puntos por Posts (postsScore)
-    // Contar las respuestas recibidas en todos los posts donde el usuario es autor
-    const { data: userPosts, error: postsError } = await supabase
-      .from('posts')
-      .select('id')
-      .eq('author_id', userId);
+    // MOCK: Simulamos la respuesta de Supabase para los posts sin tocar la base de datos
+    const { data: userPosts, error: postsError } = {
+      data: [
+        { id: 'post-mock-1' },
+        { id: 'post-mock-2' },
+        { id: 'post-mock-3' }
+      ],
+      error: null
+    };
 
     if (postsError) {
       console.error('Error al consultar posts del usuario:', postsError.message);
@@ -52,11 +56,14 @@ export async function updateUserReputation(userId: string) {
     }
 
     // 2. Puntos por Respuestas (repliesScore)
-    // Obtener todas las respuestas del usuario
-    const { data: userReplies, error: userRepliesError } = await supabase
-      .from('replies')
-      .select('id')
-      .eq('user_id', userId);
+    // MOCK: Simulamos la respuesta de Supabase para las respuestas del usuario sin tocar la base de datos
+    const { data: userReplies, error: userRepliesError } = {
+      data: [
+        { id: 'reply-mock-1' },
+        { id: 'reply-mock-2' }
+      ],
+      error: null
+    };
 
     if (userRepliesError) {
       console.error('Error al consultar respuestas del usuario:', userRepliesError.message);
@@ -115,4 +122,3 @@ export async function updateUserReputation(userId: string) {
     return { success: false, error: 'Error interno del servidor.' };
   }
 }
-
