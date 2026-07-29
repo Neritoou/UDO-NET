@@ -25,8 +25,8 @@ export async function updateUserReputation(userId: string) {
     // MOCK: Simulamos la respuesta de Supabase para los posts sin tocar la base de datos
     const { data: userPosts, error: postsError } = {
       data: [
-        { id: 'post-mock-1' },
-        { id: 'post-mock-2' },
+        { id: 'post-mock-1' }, 
+        { id: 'post-mock-2' },   //TODO: usar getPostByUser del Modulo 3
         { id: 'post-mock-3' }
       ],
       error: null
@@ -60,7 +60,7 @@ export async function updateUserReputation(userId: string) {
     const { data: userReplies, error: userRepliesError } = {
       data: [
         { id: 'reply-mock-1' },
-        { id: 'reply-mock-2' }
+        { id: 'reply-mock-2' }   //TODO: usar getPostByUser del Modulo 3
       ],
       error: null
     };
