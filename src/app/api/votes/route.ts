@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/db/server';
-import { calculateWeight } from '@/modules/module_4/votes/utils/calculateWeight';
-import { createNotification } from '@/modules/module_4/notifications/utils/triggerEvent';
+import { calculateWeight } from '@/modules/module_4/votes/services/weight.service';
+import { createNotification } from '@/modules/module_4/notifications/services/notification.service';
 import type { VotePayload } from '@/modules/module_4/types';
 
 /**
