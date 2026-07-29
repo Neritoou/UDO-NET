@@ -35,13 +35,8 @@ export async function POST(request: NextRequest) {
     //  Obtener el usuario actual
     // En una app real, el currentUserId vendría del token de sesión/autenticación.
     // Aquí lo leemos del header personalizado para demostración.
-    const currentUserId = request.headers.get('x-user-id');
-    if (!currentUserId) {
-      return NextResponse.json(
-        { error: 'No se proporcionó el ID del usuario. Se requiere el header x-user-id.' },
-        { status: 400 }
-      );
-    }
+  const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001'; 
+  const currentUserId = MOCK_USER_ID;
 
     // 1. Anti-Self-Voting 
     // Consultar quién es el autor de la respuesta

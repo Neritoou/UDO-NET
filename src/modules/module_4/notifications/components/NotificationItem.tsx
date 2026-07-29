@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { Notification } from '@/modules/module_4/types';
-
+import { formatDate } from '@/lib/utils/formatDate';
 /**
  * Props del componente NotificationItem.
  */
@@ -21,25 +21,6 @@ const typeConfig: Record<string, { label: string; icon: string }> = {
   warning: { label: 'Advertencia', icon: '⚠️' },
   report: { label: 'Reporte', icon: '🚩' },
 };
-
-/**
- * Formatea una fecha ISO a un formato relativo legible.
- */
-function formatRelativeTime(dateString: string): string {
-  const now = new Date();
-  const date = new Date(dateString);
-  const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-  const diffMins = Math.floor(diffSecs / 60);
-  const diffHours = Math.floor(diffMins / 60);
-  const diffDays = Math.floor(diffHours / 24);
-
-  if (diffSecs < 60) return 'Hace un momento';
-  if (diffMins < 60) return `Hace ${diffMins} min`;
-  if (diffHours < 24) return `Hace ${diffHours}h`;
-  if (diffDays < 7) return `Hace ${diffDays}d`;
-  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-}
 
 /**
  * Componente NotificationItem
@@ -83,7 +64,7 @@ export default function NotificationItem({ notification, onMarkRead }: Notificat
 
       {/* Timestamp */}
       <span className="flex-shrink-0 text-xs text-gray-400">
-        {formatRelativeTime(notification.created_at)}
+       {formatDate(notification.created_at)}
       </span>
     </button>
   );
