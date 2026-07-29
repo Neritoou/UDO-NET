@@ -8,21 +8,25 @@ export interface MockPost {
     content: string;
     community: string;
     tags: string[];
-    author: { username: string; };
+    author: { 
+        id?: string;       // <-- Campo agregado para el ID del usuario
+        username: string;
+        avatar?: string;   // <-- Campo agregado para la URL o imagen de perfil
+    };
     createdAt: Date;
     votes: number;
     repliesCount: number;
     status: 'Abierto' | 'Resuelto' | 'Fijado';
     replies: MockReply[];
-    links?: string[];      // Campo opcional agregado
-    linkMetadata?: {       // Campo opcional para soportar los datos del scraper de miniatura
+    links?: string[];       // Campo opcional agregado
+    linkMetadata?: {        // Campo opcional para soportar los datos del scraper de miniatura
         title: string;
         description: string;
         image: {
             url: string;
         };
     } | null;
-}
+} 
 export interface MockReply {
     id: string;
     author: { username: string; };

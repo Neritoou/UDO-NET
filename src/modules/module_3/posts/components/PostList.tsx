@@ -23,10 +23,8 @@ export default function PostList({ onSelectPost }: PostListProps) {
       try {
         let results: MockPost[] = [];
         if (query.trim() === '') {
-          // No cargar posts inicialmente si no hay término de búsqueda
           results = [];
         } else {
-          // Si hay búsqueda, analizar tags potenciales y buscar
           const tags = query.includes(',') 
             ? query.split(',').map(t => t.trim().toLowerCase()) 
             : [];
@@ -129,9 +127,24 @@ export default function PostList({ onSelectPost }: PostListProps) {
               )}
 
               <div className="flex items-center justify-between text-xs text-gray-500 border-t border-gray-850/50 pt-3">
-                <div>
-                  Por <span className="font-semibold text-gray-300">{post.author?.username || 'Anónimo'}</span>
+                {/* Bloque del Autor con Avatar / Círculo blanco */}
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-white border border-gray-700 overflow-hidden flex items-center justify-center shrink-0">
+                    {post.author?.avatar ? (
+                      <img 
+                        src={post.author.avatar} 
+                        alt={post.author.username || 'Avatar'} 
+                        className="w-full h-full object-cover" 
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    Por <span className="font-semibold text-gray-300">{post.author?.username || 'Anónimo'}</span>
+                  </div>
                 </div>
+
                 <div className="flex items-center space-x-4">
                   <span>{post.votes} votos</span>
                   <span>•</span>

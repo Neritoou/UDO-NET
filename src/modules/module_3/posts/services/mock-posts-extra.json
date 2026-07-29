@@ -205,21 +205,265 @@
     }
   },
   {
-    "id": "post_5109c6f3",
-    "title": "adfdsf",
-    "content": "adfdsf",
+    "id": "post_01624fe8",
+    "title": "miren tengo una duda este video es real?...",
+    "content": "miren tengo una duda este video es real? es que no me lo creo",
     "community": "General",
     "tags": [
-      "general"
+      "hola"
     ],
     "author": {
       "username": "Joyce Valerio"
     },
-    "createdAt": "2026-07-17T02:01:24.579Z",
+    "createdAt": "2026-07-23T01:31:16.623Z",
+    "votes": 0,
+    "repliesCount": 1,
+    "status": "Abierto",
+    "replies": [
+      {
+        "id": "resp_61e24cb7",
+        "author": {
+          "username": "UsuarioActivo"
+        },
+        "content": "yo creo que esta hecho con IA",
+        "createdAt": "2026-07-24T13:48:39.589Z",
+        "votes": 0,
+        "nestedReplies": []
+      }
+    ],
+    "links": [
+      "https://www.youtube.com/watch?v=J8U9czVT7tM&list=RDJ8U9czVT7tM&start_radio=1"
+    ],
+    "linkMetadata": {
+      "title": "Rauw Alejandro, Romeo Santos - Khé? (Official Video)",
+      "description": "RauwAlejandroVEVO",
+      "image": {
+        "url": "https://img.youtube.com/vi/J8U9czVT7tM/maxresdefault.jpg"
+      }
+    }
+  },
+  {
+    "id": "post_a114e18e",
+    "title": "me da igula dkasenhfoiejf esf",
+    "content": "me da igula dkasenhfoiejf esf",
+    "community": "General",
+    "tags": [
+      "sistemas",
+      "udo"
+    ],
+    "author": {
+      "username": "Leonel"
+    },
+    "createdAt": "2026-07-23T19:45:23.755Z",
     "votes": 0,
     "repliesCount": 0,
     "status": "Abierto",
     "replies": [],
+    "links": [],
+    "linkMetadata": null
+  },
+  {
+    "id": "post_53242174",
+    "title": "pruevbasa",
+    "content": "dsadsadsad",
+    "community": "General",
+    "tags": [
+      "ayuda"
+    ],
+    "author": {
+      "username": "Joyce Valerio"
+    },
+    "createdAt": "2026-07-23T20:12:59.033Z",
+    "votes": 0,
+    "repliesCount": 0,
+    "status": "Abierto",
+    "replies": [],
+    "links": [],
+    "linkMetadata": null
+  },
+  {
+    "id": "post_9d7b763f",
+    "title": "respuetas prubea 2",
+    "content": "intento dos con los botones de respuetsas",
+    "community": "General",
+    "tags": [
+      "intnetos"
+    ],
+    "author": {
+      "username": "Joyce Valerio"
+    },
+    "createdAt": "2026-07-23T20:38:30.155Z",
+    "votes": 0,
+    "repliesCount": 2,
+    "status": "Abierto",
+    "replies": [
+      {
+        "id": "resp_0f2e1718",
+        "author": {
+          "username": "UsuarioActivo"
+        },
+        "content": "primera respuesta al post",
+        "createdAt": "2026-07-23T20:39:03.463Z",
+        "votes": 0,
+        "nestedReplies": [
+          {
+            "id": "resp_e7488606",
+            "author": {
+              "username": "UsuarioActivo"
+            },
+            "content": "a",
+            "createdAt": "2026-07-23T20:46:22.114Z",
+            "votes": 0,
+            "nestedReplies": []
+          }
+        ]
+      }
+    ],
+    "links": [],
+    "linkMetadata": null
+  },
+  {
+    "id": "post_52f48e39",
+    "title": "Titulo de Publicacion Intento",
+    "content": "prueba de Titulo, Respuestas y botones para votos",
+    "community": "General",
+    "tags": [
+      "prueba",
+      "udonet"
+    ],
+    "author": {
+      "username": "Dano"
+    },
+    "createdAt": "2026-07-23T20:51:17.090Z",
+    "votes": 0,
+    "repliesCount": 5,
+    "status": "Abierto",
+    "replies": [
+      {
+        "id": "resp_00a860dc",
+        "author": {
+          "username": "UsuarioActivo"
+        },
+        "content": "Intento de respuesta a post principal",
+        "createdAt": "2026-07-23T20:51:54.670Z",
+        "votes": 0,
+        "nestedReplies": [
+          {
+            "id": "resp_f5494fb1",
+            "author": {
+              "username": "UsuarioActivo"
+            },
+            "content": "respuesta anidada de otro usuario para crear el hilo",
+            "createdAt": "2026-07-23T20:52:23.052Z",
+            "votes": 0,
+            "nestedReplies": [
+              {
+                "id": "resp_142963ae",
+                "author": {
+                  "username": "UsuarioActivo"
+                },
+                "content": "@Alejandro",
+                "createdAt": "2026-07-25T11:34:55.459Z",
+                "votes": 0,
+                "nestedReplies": []
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "resp_41c179f4",
+        "author": {
+          "username": "UsuarioActivo"
+        },
+        "content": "otra respuesta",
+        "createdAt": "2026-07-23T20:52:40.651Z",
+        "votes": 0,
+        "nestedReplies": []
+      },
+      {
+        "id": "resp_8668fd19",
+        "author": {
+          "username": "UsuarioActivo"
+        },
+        "content": "prueba de menciones @Dano",
+        "createdAt": "2026-07-25T11:32:41.913Z",
+        "votes": 0,
+        "nestedReplies": []
+      }
+    ],
+    "links": [
+      "https://youtu.be/qgDaO_gz4MI?si=18m_QGhWsP_esrXU"
+    ],
+    "linkMetadata": {
+      "title": "HUGs",
+      "description": "Paledusk - Topic",
+      "image": {
+        "url": "https://img.youtube.com/vi/qgDaO_gz4MI/maxresdefault.jpg"
+      }
+    }
+  },
+  {
+    "id": "post_741bbfbc",
+    "title": "miren este video",
+    "content": "hola miren",
+    "community": "General",
+    "tags": [
+      "hola"
+    ],
+    "author": {
+      "id": "user_created_123",
+      "username": "UsuarioRegistrado",
+      "avatar": ""
+    },
+    "createdAt": "2026-07-24T13:59:12.389Z",
+    "votes": 0,
+    "repliesCount": 1,
+    "status": "Abierto",
+    "replies": [
+      {
+        "id": "resp_8c46b65f",
+        "author": {
+          "username": "UsuarioActivo"
+        },
+        "content": "mencion @Keiber",
+        "createdAt": "2026-07-25T11:45:32.515Z",
+        "votes": 0,
+        "nestedReplies": []
+      }
+    ],
+    "links": [],
+    "linkMetadata": null
+  },
+  {
+    "id": "post_ef66628a",
+    "title": "publicacion de mencion",
+    "content": "prueba",
+    "community": "General",
+    "tags": [
+      "ayuda"
+    ],
+    "author": {
+      "id": "user_created_123",
+      "username": "UsuarioRegistrado",
+      "avatar": ""
+    },
+    "createdAt": "2026-07-25T11:46:31.053Z",
+    "votes": 0,
+    "repliesCount": 1,
+    "status": "Abierto",
+    "replies": [
+      {
+        "id": "resp_63bbb151",
+        "author": {
+          "username": "UsuarioActivo"
+        },
+        "content": "@Keiber",
+        "createdAt": "2026-07-25T11:47:26.019Z",
+        "votes": 0,
+        "nestedReplies": []
+      }
+    ],
     "links": [],
     "linkMetadata": null
   }

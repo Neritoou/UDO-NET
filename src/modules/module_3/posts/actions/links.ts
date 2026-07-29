@@ -1,7 +1,5 @@
-"use server";
-
-import axios from 'axios';
-import * as cheerio from 'cheerio';
+"use server"
+const debounceTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
 function decodeHtmlEntities(text: string): string {
   if (!text) return '';
@@ -14,6 +12,41 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&nbsp;/g, ' ')
     .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(Number(dec)))
     .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+
+// Función auxiliar para extraer contenido de etiquetas HTML usando expresiones regulares
+function getMetaContent(html: string, pattern: RegExp): string {
+  const match = html.match(pattern);
+  return match && match[1] ? decodeHtmlEntities(match[1].trim()) : '';
+}
+
+// Extrae título, descripción e imagen del HTML sin depender de Cheerio
+function parseHtmlMetadata(html: string) {
+  const ogTitle = getMetaContent(html, /<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i) ||
+                  getMetaContent(html, /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
+
+  const titleTag = getMetaContent(html, /<title[^>]*>([^<]+)<\/title>/i);
+
+  const ogDesc = getMetaContent(html, /<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i) ||
+                 getMetaContent(html, /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:description["']/i);
+
+  const metaDesc = getMetaContent(html, /<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i) ||
+                    getMetaContent(html, /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i);
+
+  const ogImage = getMetaContent(html, /<meta[^>]*property=["']og:image["'][^>]*content=["']([^"']+)["']/i) ||
+                  getMetaContent(html, /<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:image["']/i);
+
+  const twitterImage = getMetaContent(html, /<meta[^>]*name=["']twitter:image["'][^>]*content=["']([^"']+)["']/i) ||
+                       getMetaContent(html, /<meta[^>]*content=["']([^"']+)["'][^>]*name=["']twitter:image["']/i);
+
+  const linkThumb = getMetaContent(html, /<link[^>]*itemprop=["']thumbnailUrl["'][^>]*href=["']([^"']+)["']/i) ||
+                    getMetaContent(html, /<link[^>]*rel=["']image_src["'][^>]*href=["']([^"']+)["']/i);
+
+  return {
+    title: ogTitle || titleTag,
+    description: ogDesc || metaDesc,
+    image: ogImage || twitterImage || linkThumb,
+  };
 }
 
 function isPrivateIPv4(hostname: string): boolean {
@@ -64,16 +97,21 @@ function resolveRelativeUrl(base: string, relative: string): string {
   }
 }
 
-async function fetchYouTubeMetadata(videoId: string, url: string) {
+async function getYouTubeMetadata(videoId: string, url: string) {
   const fallbackImage = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
-  // Try oEmbed first
+  // Intentar oEmbed primero
   try {
-    const oembedRes = await axios.get(
+    const oembedRes = await fetch(
       `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`,
-      { timeout: 3000 }
+      { signal: AbortSignal.timeout(3000) }
     );
-    const data = oembedRes.data;
+
+    if (!oembedRes.ok) {
+      throw new Error(`HTTP error! status: ${oembedRes.status}`);
+    }
+
+    const data = await oembedRes.json();
     return {
       success: 1 as const,
       meta: {
@@ -86,29 +124,31 @@ async function fetchYouTubeMetadata(videoId: string, url: string) {
     };
   } catch {
     try {
-      const pageRes = await axios.get(url, {
+      const pageRes = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         },
-        timeout: 4000,
-        maxContentLength: 5 * 1024 * 1024,
-        responseType: 'arraybuffer', // to handle possible binary
+        signal: AbortSignal.timeout(4000),
       });
-      const html = pageRes.data.toString();
-      const $ = cheerio.load(html);
-      const title = decodeHtmlEntities(
-        $('meta[property="og:title"]').attr('content') || $('title').text() || 'YouTube Video'
-      );
-      const description = decodeHtmlEntities(
-        $('meta[property="og:description"]').attr('content') ||
-        $('meta[name="description"]').attr('content') || ''
-      );
-      let image = $('meta[property="og:image"]').attr('content') ||
-                  $('link[itemprop="thumbnailUrl"]').attr('href') || '';
+
+      if (!pageRes.ok) {
+        throw new Error(`HTTP error! status: ${pageRes.status}`);
+      }
+
+      const html = await pageRes.text();
+      const meta = parseHtmlMetadata(html);
+
+      let image = meta.image;
       if (image) image = resolveRelativeUrl(url, image);
+
       return {
         success: 1 as const,
-        meta: { title, description, image: { url: image || fallbackImage } },
+        meta: {
+          title: meta.title || 'YouTube Video',
+          description: meta.description,
+          image: { url: image || fallbackImage },
+        },
       };
     } catch {
       return {
@@ -123,7 +163,7 @@ async function fetchYouTubeMetadata(videoId: string, url: string) {
   }
 }
 
-async function fetchGenericMetadata(
+async function getGenericMetadata(
   url: string,
   redirectCount = 0
 ): Promise<{ success: 1; meta: { title: string; description: string; image: { url: string } } }> {
@@ -132,18 +172,17 @@ async function fetchGenericMetadata(
     throw new Error('Too many redirects');
   }
 
-  const response = await axios.get(url, {
+  const response = await fetch(url, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Accept-Language': 'es-ES,es;q=0.9',
     },
-    timeout: 5000,
-    maxContentLength: 5 * 1024 * 1024,
-    responseType: 'arraybuffer',
-    validateStatus: () => true,
+    signal: AbortSignal.timeout(5000),
+    redirect: 'follow',
   });
 
-  const contentType = String(response.headers['content-type'] || '');
+  const contentType = String(response.headers.get('content-type') || '');
   if (contentType.startsWith('image/')) {
     const fileName = new URL(url).pathname.split('/').pop() || 'Imagen';
     return {
@@ -158,9 +197,8 @@ async function fetchGenericMetadata(
 
   let html = '';
   try {
-    html = response.data.toString();
-  } catch {
-  }
+    html = await response.text();
+  } catch {}
 
   if (!html.trim()) {
     const hostname = new URL(url).hostname;
@@ -174,68 +212,74 @@ async function fetchGenericMetadata(
     };
   }
 
-  const $ = cheerio.load(html);
-
-  const metaRefresh = $('meta[http-equiv="refresh"]').attr('content');
-  if (metaRefresh) {
-    const match = metaRefresh.match(/url=(.+)/i);
-    if (match && match[1]) {
-      let redirectUrl = match[1].trim();
-      try {
-        redirectUrl = new URL(redirectUrl, url).href;
-      } catch {
-      }
-      return await fetchGenericMetadata(redirectUrl, redirectCount + 1);
-    }
+  // Redirección meta refresh mediante Regex
+  const refreshMatch = html.match(/<meta[^>]*http-equiv=["']refresh["'][^>]*content=["'][^"']*url=([^"'\s]+)["']/i);
+  if (refreshMatch && refreshMatch[1]) {
+    let redirectUrl = refreshMatch[1].trim();
+    try {
+      redirectUrl = new URL(redirectUrl, url).href;
+    } catch {}
+    return await getGenericMetadata(redirectUrl, redirectCount + 1);
   }
 
-  const title = decodeHtmlEntities(
-    $('meta[property="og:title"]').attr('content') || $('title').text() || ''
-  );
-  const description = decodeHtmlEntities(
-    $('meta[property="og:description"]').attr('content') ||
-    $('meta[name="description"]').attr('content') || ''
-  );
-  let imageUrl = $('meta[property="og:image"]').attr('content') ||
-                 $('meta[name="twitter:image"]').attr('content') ||
-                 $('link[rel="image_src"]').attr('href') || '';
+  const parsedMeta = parseHtmlMetadata(html);
 
+  let imageUrl = parsedMeta.image;
   if (imageUrl) {
     imageUrl = resolveRelativeUrl(url, imageUrl);
   }
 
-  const finalTitle = title || new URL(url).pathname.split('/').pop() || 'Enlace';
+  const finalTitle = parsedMeta.title || new URL(url).pathname.split('/').pop() || 'Enlace';
 
   return {
     success: 1 as const,
     meta: {
       title: finalTitle,
-      description,
+      description: parsedMeta.description,
       image: { url: imageUrl },
     },
   };
 }
 
 export async function getLinkMetadata(inputUrl: string) {
-  try {
-    if (!inputUrl) {
-      return { success: 0 as const, error: 'URL inválida o vacía' };
-    }
-
-    const validated = validateUrl(inputUrl);
-    const url = validated.href;
-
-    const ytId = getYouTubeId(url);
-    if (ytId) {
-      return await fetchYouTubeMetadata(ytId, url);
-    }
-
-    return await fetchGenericMetadata(url);
-  } catch (error) {
-    console.error('Error en getLinkMetadata:', error);
-    return {
-      success: 0 as const,
-      error: error instanceof Error ? error.message : 'No se pudo obtener la previsualización del enlace.',
-    };
+  if (!inputUrl) {
+    return { success: 0 as const, error: 'URL inválida o vacía' };
   }
+
+  // Cancelar temporizador anterior pendiente para esta misma URL exacta (debounce)
+  if (debounceTimeouts.has(inputUrl)) {
+    clearTimeout(debounceTimeouts.get(inputUrl)!);
+    debounceTimeouts.delete(inputUrl);
+  }
+
+  return new Promise((resolve) => {
+    const timeout = setTimeout(async () => {
+      debounceTimeouts.delete(inputUrl);
+      try {
+        const validated = validateUrl(inputUrl);
+        const url = validated.href;
+
+        const ytId = getYouTubeId(url);
+        if (ytId) {
+          const result = await getYouTubeMetadata(ytId, url);
+          resolve(result);
+          return;
+        }
+
+        const result = await getGenericMetadata(url);
+        resolve(result);
+      } catch (error) {
+        console.error('Error en getLinkMetadata:', error);
+        resolve({
+          success: 0 as const,
+          error:
+            error instanceof Error
+              ? error.message
+              : 'No se pudo obtener la previsualización del enlace.',
+        });
+      }
+    }, 300);
+
+    debounceTimeouts.set(inputUrl, timeout);
+  });
 }

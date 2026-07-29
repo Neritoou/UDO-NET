@@ -24,7 +24,7 @@ function Module3Content() {
             
             <div className="flex items-center">
               <button
-                onClick={openCreatePost}
+                onClick={() => openCreatePost()}
                 className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-sm rounded-lg transition-all shadow-md"
               >
                 + Crear Publicación
