@@ -5,13 +5,12 @@ on:
     branches:
       - develop
       - main
-      - 'module_*/**'
 
 jobs:
   check-ownership:
     runs-on: ubuntu-latest
     steps:
-      - name: Verificar Rama
+      - name: Verificar Rama y Archivos
         uses: actions/github-script@v7
         with:
           script: |
@@ -45,7 +44,7 @@ jobs:
               return;
             }
 
-            // Bloquear PRs de no-integradores hacia ramas de módulo
+            // Bloquear PRs de no-integradores hacia ramas que no sean develop
             if (targetBranch !== 'develop') {
               core.setFailed(
                 `[FAIL] ${author} está intentando crear un PR hacia "${targetBranch}".\n` +
@@ -59,50 +58,62 @@ jobs:
 
             const permisos = {
               // Módulo 1 — Auth y Perfiles
-              'frednat23': [
-                'module_1/auth_&_profile',
-              ],
-              'cristian1414': [
-                'module_1/auth_&_profile',
-              ],
-              'sebato785': [
-                'module_1/auth_&_profile',
-              ],
+              'frednat23': {
+                branch: 'module_1/auth_&_profile',
+                paths: ['src/modules/module_1/']
+              },
+              'cristian1414': {
+                branch: 'module_1/auth_&_profile',
+                paths: ['src/modules/module_1/']
+              },
+              'sebato785': {
+                branch: 'module_1/auth_&_profile',
+                paths: ['src/modules/module_1/']
+              },
 
               // Módulo 2 — Comunidades y Feed
-              'aguilera2509': [
-                'module_2/communities_&_feed',
-              ],
+              'aguilera2509': {
+                branch: 'module_2/communities_&_feed',
+                paths: ['src/modules/module_2/']
+              },
 
               // Módulo 3 — Publicaciones, Hilos y Buscador
-              'alecsoc': [
-                'module_3/posts_&_threads',
-              ],
-              'kurui02': [
-                'module_3/posts_&_threads',
-              ],
+              'alecsoc': {
+                branch: 'module_3/posts_&_threads',
+                paths: ['src/modules/module_3/']
+              },
+              'kurui02': {
+                branch: 'module_3/posts_&_threads',
+                paths: ['src/modules/module_3/']
+              },
 
               // Módulo 4 — Votación, Reputación y Notificaciones
-              'angelgrb0412': [
-                'module_4/votes_&_notifications',
-              ],
-              'lui525': [
-                'module_4/votes_&_notifications',
-              ],
-              'tenmyouji22': [
-                'module_4/votes_&_notifications',
-              ],
+              'angelgrb0412': {
+                branch: 'module_4/votes_&_notifications',
+                paths: ['src/modules/module_4/']
+              },
+              'lui525': {
+                branch: 'module_4/votes_&_notifications',
+                paths: ['src/modules/module_4/']
+              },
+              'tenmyouji22': {
+                branch: 'module_4/votes_&_notifications',
+                paths: ['src/modules/module_4/']
+              },
 
               // Módulo 5 — Moderación, Reportes y Advertencias
-              'gabo-skyder8': [
-                'module_5/moderation_&_reports',
-              ],
-              'jkun016': [
-                'module_5/moderation_&_reports',
-              ],
-              'abrasha06': [
-                'module_5/moderation_&_reports',
-              ],
+              'gabo-skyder8': {
+                branch: 'module_5/moderation_&_reports',
+                paths: ['src/modules/module_5/']
+              },
+              'jkun016': {
+                branch: 'module_5/moderation_&_reports',
+                paths: ['src/modules/module_5/']
+              },
+              'abrasha06': {
+                branch: 'module_5/moderation_&_reports',
+                paths: ['src/modules/module_5/']
+              },
             };
 
             // Verificar que el usuario esté registrado
@@ -114,15 +125,42 @@ jobs:
               return;
             }
 
-            const ramasPermitidas = permisos[author];
+            const config = permisos[author];
 
-            if (!ramasPermitidas.includes(sourceBranch)) {
+            // Verificar rama de origen
+            if (sourceBranch !== config.branch) {
               core.setFailed(
                 `[FAIL] ${author} está enviando un PR desde "${sourceBranch}".\n` +
-                `Tus ramas asignadas son: ${ramasPermitidas.join(', ')}\n` +
-                `Trabaja en una de tus ramas y crea el PR desde ahí.`
+                `Tu rama asignada es: ${config.branch}\n` +
+                `Trabaja en tu rama y crea el PR desde ahí.`
               );
               return;
             }
 
             console.log(`[PASS] ${author} está trabajando desde su rama asignada.`);
+
+            // Verificar archivos modificados
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100
+            });
+
+            const archivosProhibidos = files
+              .map(f => f.filename)
+              .filter(filename => {
+                return !config.paths.some(path => filename.startsWith(path));
+              });
+
+            if (archivosProhibidos.length > 0) {
+              core.setFailed(
+                `[FAIL] ${author} modificó archivos fuera de su módulo:\n` +
+                archivosProhibidos.map(f => `  - ${f}`).join('\n') + '\n\n' +
+                `Solo puedes modificar archivos dentro de: ${config.paths.join(', ')}\n` +
+                `Remueve los archivos que no corresponden a tu módulo.`
+              );
+              return;
+            }
+
+            console.log(`[PASS] Todos los archivos están dentro del módulo asignado.`);
