@@ -1,5 +1,5 @@
 import { Report, ReportStatus } from "@/lib/types/report";
-import { supabase } from "@/lib/db"; 
+import { createClient } from "@/lib/db/server"; 
 
 export class ReportPriorityService {
   /**
@@ -39,15 +39,22 @@ export class ReportPriorityService {
    * y los ordena de mayor a menor gravedad usando la heurística de prioridad.
    */
   public async getPrioritizedReports(): Promise<Report[]> {
-    const { data: reports, error } = await supabase
-      .from("reports")
-      .select("*")
-      .eq("status", "pending" as ReportStatus);
+    try {
+      const supabase = await createClient();
 
-    if (error) throw new Error(`Failed to fetch reports: ${error.message}`);
+      const { data: reports, error } = await supabase
+        .from("reports")
+        .select("*")
+        .eq("status", "pendiente" as ReportStatus);
 
-    return (reports as Report[]).sort((a, b) => 
-      this.calculateReportScore(b) - this.calculateReportScore(a)
-    );
+      if (error) throw new Error(`Failed to fetch reports: ${error.message}`);
+
+      return (reports as Report[]).sort((a, b) =>
+        this.calculateReportScore(b) - this.calculateReportScore(a)
+      );
+    } catch (err) {
+      console.warn("ReportPriorityService.getPrioritizedReports: unable to fetch reports, returning empty list.", err);
+      return [];
+    }
   }
 }
