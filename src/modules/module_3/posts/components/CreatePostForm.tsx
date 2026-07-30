@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { createPostAction, getUserJoinedCommunitiesAction, CommunityOption } from "@module_3/posts/actions/post";
 import { getLinkMetadata } from "@module_3/posts/actions/links";
+import PopoverSelect from '../../components/PopoverSelect';
+import UserAvatar from '../../components/UserAvatar';
+import { CloseIcon } from '../../components/icons';
 
 interface LinkMetadata {
   title?: string;
@@ -15,13 +18,15 @@ interface CreatePostModalProps {
   onClose: () => void;
   initialCommunity?: string;
   userAvatar?: string;
+  userName?: string;
 }
 
 export default function CreatePostModal({ 
   isOpen, 
   onClose, 
   initialCommunity = "General", 
-  userAvatar 
+  userAvatar,
+  userName = "Estudiante UDO"
 }: CreatePostModalProps) {
   const [title, setTitle] = useState("");
   const [community, setCommunity] = useState(initialCommunity);
@@ -91,6 +96,11 @@ export default function CreatePostModal({
     e.preventDefault();
     setStatusMessage(null);
 
+    if (!title.trim()) {
+      setStatusMessage({ success: false, text: "El título de la publicación es obligatorio." });
+      return;
+    }
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("communityId", community);
@@ -127,86 +137,115 @@ export default function CreatePostModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="relative w-full max-w-2xl bg-[#121212] rounded-xl border border-gray-800 text-white p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in duration-150">
+    // Fondo semitransparente oscuro con desenfoque
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-alpha-black backdrop-blur-sm p-4 sm:p-6 overflow-y-auto">
 
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-white transition font-bold"
-          title="Cerrar"
-        >
-          ✕
-        </button>
+      {/* Contenedor del Modal */}
+      <div className="relative w-full max-w-xl bg-pure-white rounded-[30px] text-main-black overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-150 my-auto border border-white-gray">
 
-        <div className="flex items-center space-x-3 border-b border-gray-850 pb-3">
-          <div className="w-8 h-8 rounded-full bg-white border border-gray-700 overflow-hidden flex items-center justify-center shrink-0">
-            {userAvatar ? (
-              <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-white" />
-            )}
-          </div>
-          <h2 className="text-base font-semibold text-gray-200">Crear Nueva Publicación</h2>
+        {/* Header del Modal */}
+        <div className="relative flex items-center justify-center border-b-2 border-white-gray px-6 py-5 sm:px-8">
+
+          {/* Título del Modal */}
+          <h2 className="font-candal text-h4 font-normal text-main-black text-center">
+            Crear Publicación
+          </h2>
+
+          {/* Botón de cerrar */}
+          <button
+            onClick={onClose}
+            className="absolute right-6 text-main-black hover:text-deep-orange transition-transform duration-200 hover:scale-110 cursor-pointer"
+            title="Cerrar"
+          >
+            <CloseIcon className="w-5 h-5" />
+          </button>
         </div>
 
-        <form onSubmit={handlePublish} className="space-y-3">
+        {/* Body del Modal */}
+        <form onSubmit={handlePublish} className="p-6 sm:p-8 space-y-5">
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input 
+          {/* Usuario y Selección de Comunidad */}
+          <div className="flex items-center space-x-3 pt-1">
+
+            {/* Avatar */}
+            <UserAvatar avatarUrl={userAvatar} username={userName} size="w-12 h-12" />
+
+            {/* Nombre del Usuario */}
+            <div className="flex flex-col space-y-1">
+              <span className="font-candal text-p font-normal text-main-black leading-tight">
+                {userName}
+              </span>
+              
+              {/* Selector de Comunidad */}
+              <PopoverSelect
+                options={communitiesList}
+                selectedValue={community}
+                onSelect={(val) => setCommunity(val)}
+                titleHeader="Comunidad"
+                showSearchInput={true}
+                popoverWidth="w-[135px]"
+                originTop={true}
+              />
+            </div>
+          </div>
+
+          {/* Título de la Publicación */}
+          <div className="space-y-1">
+            <input
               type="text"
               name="title"
-              placeholder="Título de la Publicación"
+              placeholder="Título de la publicación..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
-              className="sm:col-span-2 w-full p-2.5 border border-gray-750 bg-[#1a1a1a] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-white placeholder-gray-500 font-bold" 
+              className="w-full px-4 py-2 bg-lite-white text-main-black font-candal font-normal text-p placeholder:font-candal placeholder:font-normal placeholder:text-alpha-black rounded-xl focus:outline-none focus:ring-2 focus:ring-main-blue/50 border-0"
             />
-
-            {/* Selector desplegable de comunidades */}
-            <select
-              name="community"
-              value={community}
-              onChange={(e) => setCommunity(e.target.value)}
-              required
-              className="w-full p-2.5 border border-gray-750 bg-[#1a1a1a] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-white cursor-pointer"
-            >
-              {communitiesList.map((c) => (
-                <option key={c.id} value={c.id} className="bg-[#1a1a1a] text-white">
-                  {c.name}
-                </option>
-              ))}
-            </select>
           </div>
-          
-          <textarea
-            name="postText"
-            placeholder="¿Qué estás pensando?"
-            value={postText}
-            onChange={(e) => setPostText(e.target.value)}
-            rows={3}
-            className="w-full p-3 border border-gray-850 bg-[#1a1a1a] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-500 resize-none text-sm"
-          />
 
-          <input
-            type="text"
-            placeholder="Enlace opcional (ej: https://github.com/...)"
-            value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
-            className="w-full p-2.5 border border-gray-750 bg-[#1a1a1a] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-white placeholder-gray-500"
-          />
+          {/* Caja Principal de Pregunta */}
+          <div className="relative">
+            <textarea
+              name="postText"
+              placeholder="Haz una pregunta..."
+              value={postText}
+              onChange={(e) => setPostText(e.target.value)}
+              rows={4}
+              required
+              className="w-full p-4 border-2 border-main-blue/70 focus:border-main-blue bg-pure-white text-main-black font-candal font-normal text-p-plus placeholder:text-alpha-black placeholder:font-candal placeholder:font-normal rounded-[20px] focus:outline-none resize-none transition-all shadow-inner"
+            />
+          </div>
 
-          <input
-            type="text"
-            name="tags"
-            placeholder="Tags separados por comas (ej: udo,sistemas,ayuda)"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            className="w-full p-2.5 border border-gray-750 bg-[#1a1a1a] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-white placeholder-gray-500"
-          />
+          {/* Controles Inferiores */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
 
+            {/* Input de Etiquetas */}
+            <div className="flex-1 min-w-[180px]">
+              <input
+                type="text"
+                name="tags"
+                placeholder="Etiquetas (ej: ayuda, sistemas)"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                className="w-full bg-lite-white hover:bg-white-gray text-main-black font-open-sans font-extrabold text-tiny px-4 py-2.5 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-main-blue/50 placeholder:font-candal placeholder:font-normal placeholder:text-alpha-black"
+              />
+            </div>
+
+            {/* Input de Enlace opcional */}
+            <div className="flex-1 min-w-[180px]">
+              <input
+                type="url"
+                placeholder="Adjuntar enlace..."
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                className="w-full bg-lite-white hover:bg-white-gray text-main-black font-candal font-normal text-tiny px-4 py-2.5 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-main-blue/50 placeholder:font-candal placeholder:font-normal placeholder:text-alpha-black"
+              />
+            </div>
+          </div>
+
+          {/* Previsualización de Metadatos de URL si existe */}
           {loading && (
-            <div className="p-3 bg-[#1a1a1a] rounded-lg border border-gray-800 text-center text-xs text-gray-400 animate-pulse">
-              Obteniendo vista previa del enlace...
+            <div className="p-3 bg-lite-white rounded-xl text-center font-candal font-normal text-tiny text-gray-custom animate-pulse">
+              Cargando vista previa del enlace...
             </div>
           )}
 
@@ -215,72 +254,53 @@ export default function CreatePostModal({
               <button
                 type="button"
                 onClick={() => setMetadata(null)}
-                className="absolute top-2 right-2 z-10 bg-black/80 hover:bg-black text-white rounded-full w-6 h-6 flex items-center justify-center text-xs transition border border-gray-700"
+                className="absolute top-3 right-3 z-10 text-main-black hover:text-deep-orange transition-transform duration-200 hover:scale-110 cursor-pointer"
                 title="Quitar vista previa"
               >
-                ✕
+                <CloseIcon className="w-4 h-4" />
               </button>
-
               <a
                 href={urlInput}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center overflow-hidden bg-[#1a1a1a] rounded-xl border border-gray-800 hover:border-blue-500/50 transition group p-2 gap-3.5"
+                className="flex items-center overflow-hidden bg-lite-white rounded-2xl border-0 p-3 gap-3 transition-colors"
               >
                 {metadata.image?.url && (
-                  <div className="relative w-28 h-24 sm:w-32 sm:h-24 flex-shrink-0 overflow-hidden rounded-lg bg-zinc-900">
-                    <img
-                      src={metadata.image.url}
-                      alt={metadata.title || "Vista previa"}
-                      className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
+                  <img src={metadata.image.url} alt="Preview" className="w-20 h-20 object-cover rounded-xl shrink-0" />
                 )}
-
-                <div className="flex-1 min-w-0 pr-6 space-y-1">
-                  <p className="text-xs font-medium text-blue-400 truncate">
-                    {(() => {
-                      try { return new URL(urlInput).hostname; }
-                      catch { return "Enlace"; }
-                    })()}
-                  </p>
-                  <h3 className="font-bold text-sm text-white line-clamp-1 group-hover:text-blue-400 transition">
-                    {metadata.title || "Sin título"}
-                  </h3>
-                  <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
-                    {metadata.description || "Sin descripción disponible."}
-                  </p>
+                <div className="min-w-0 flex-1 space-y-1 font-candal font-normal pr-6">
+                  <h4 className="text-tiny font-normal text-main-black truncate">{metadata.title || "Enlace"}</h4>
+                  <p className="text-extra-tiny text-gray-custom line-clamp-2">{metadata.description}</p>
                 </div>
               </a>
             </div>
           )}
 
+          {/* Mensaje de Estado */}
           {statusMessage && (
-            <div className={`p-2 rounded-lg text-xs font-medium text-center ${statusMessage.success ? 'bg-emerald-950/50 border border-emerald-800 text-emerald-400' : 'bg-rose-950/50 border border-rose-800 text-rose-400'}`}>
+            <div
+              className={`p-3 rounded-2xl font-candal font-normal text-tiny text-center transition-all ${
+                statusMessage.success
+                  ? 'bg-regular-blue/15 text-regular-blue border border-regular-blue/30'
+                  : 'bg-deep-orange/15 text-deep-orange border border-deep-orange/30'
+              }`}
+            >
               {statusMessage.text}
             </div>
           )}
 
-          <div className="flex justify-end space-x-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-1.5 border border-gray-700 text-gray-300 font-medium text-xs rounded-lg hover:bg-gray-850 transition"
-            >
-              Cancelar
-            </button>
+          {/* Botón de Publicación */}
+          <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={!title.trim() || !postText.trim() || !tags.trim() || loading}
-              className="px-5 py-1.5 bg-blue-600 text-white font-medium text-xs rounded-lg hover:bg-blue-700 disabled:bg-gray-800 disabled:text-gray-500 transition"
+              disabled={!postText.trim() || loading}
+              className="px-10 py-3 bg-regular-blue hover:bg-dark-main-blue text-pure-white font-candal font-normal text-p rounded-2xl transition-all shadow-md active:scale-95 disabled:bg-white-gray disabled:text-gray-custom disabled:cursor-not-allowed cursor-pointer"
             >
-              Publicar
+              {loading ? 'Publicando...' : 'Publicar'}
             </button>
           </div>
         </form>
+
       </div>
     </div>
   );

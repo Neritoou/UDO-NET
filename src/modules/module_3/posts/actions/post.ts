@@ -1,162 +1,128 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getLinkMetadata } from "@module_3/posts/actions/links"; 
-import { mockPosts, MockPost } from "@module_3/posts/services/mock-data"; 
-import { PostServiceFactory } from "@module_3/posts/services/factory";
-import fs from "fs/promises";
-import path from "path";
-
-interface ActionResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-}
+import { createPost, getPosts, getPostsByUser, UnifiedPost } from "@module_3/posts/services/supabase-service";
+import { 
+  getUserMainCommunities, 
+  getCommunityBySlug,
+  isUserSubscribed 
+} from "@module_2/communities/exports";
+import { createClient } from "@/lib/db/server";
 
 export interface CommunityOption {
   id: string;
   name: string;
 }
 
-const JSON_FILE_PATH = path.join(
-  process.cwd(),
-  "src",
-  "modules",
-  "module_3",
-  "posts",
-  "services",
-  "mock-posts-extra.json"
-);
+export async function getPostsByUserAction(userId: string): Promise<UnifiedPost[]> {
+  try {
+    if (!userId) throw new Error("El userId es requerido");
+    return await getPostsByUser(userId);
+  } catch (error) {
+    console.error("Error obteniendo los posts del usuario:", error);
+    return [];
+  }
+}
 
-/**
- * Obtiene las comunidades que sigue el usuario autenticado para mostrarlas en la tarjeta/selector.
- */
 export async function getUserJoinedCommunitiesAction(): Promise<CommunityOption[]> {
   try {
-    //  AQUÍ UNIR BASE DE DATOS (Filtrar y retornar solo las comunidades que el usuario sigue)
-   
-    return [
-      { id: "General", name: "General" }
-    ];
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return [];
+
+    const mainCommunities = await getUserMainCommunities(user.id);
+
+    return (mainCommunities || []).map((community: any) => ({
+      id: community.id,
+      name: community.name,
+    }));
   } catch (error) {
     console.error("Error al obtener las comunidades del usuario:", error);
-    return [{ id: "General", name: "General" }];
+
+    try {
+      const generalCommunity = await getCommunityBySlug("temas-generales");
+      if (generalCommunity) {
+        return [{ id: generalCommunity.id, name: generalCommunity.name }];
+      }
+    } catch (fallbackError) {
+      console.error("Error al buscar la comunidad General:", fallbackError);
+    }
+
+    return [];
   }
 }
 
-/**
- * Acción para crear la publicación dirigida a la comunidad elegida por el usuario.
- */
-export async function createPostAction(formData: FormData): Promise<ActionResponse> {
+export async function createPostAction(formData: FormData | {
+  title: string;
+  content: string;
+  communityId: string;
+  tags?: string[];
+  links?: string[];
+}) {
   try {
-    const title = (formData.get("title") as string) || "";
-    const postText = (formData.get("postText") as string) || "";
-    const detectedUrl = (formData.get("detectedUrl") as string) || "";
-    const tagsInput = (formData.get("tags") as string) || "";
-
-    // Obtenemos la comunidad seleccionada (de las que sigue el usuario). Si viene vacía, asignamos "General"
-    const community = ((formData.get("communityId") as string) || (formData.get("community") as string) || "General").trim();
-
-    // 1. Validación del título del post
-    if (!title.trim()) {
-      return { success: false, error: "El título de la publicación es obligatorio." };
-    }
-
-    // 2. Validación del texto del post
-    if (!postText.trim()) {
-      return { success: false, error: "El texto del post no puede estar vacío." };
-    }
-
-    // 3. Validación de etiquetas (Tags)
-    if (!tagsInput.trim()) {
-      return { success: false, error: "Es obligatorio ingresar al menos un tag." };
-    }
-
-    const tagsArray = tagsInput
-      .split(",")
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0);
-
-    if (tagsArray.length === 0) {
-      return { success: false, error: "Formato de tags inválido. Usa comas para separar." };
-    }
-
-    // 4. Obtención y procesamiento de metadatos de URL
-    let finalMetadata = null;
-    const cleanUrl = detectedUrl.trim();
-
-    if (cleanUrl) {
-      try {
-        const metaResult = (await getLinkMetadata(cleanUrl)) as {
-          success?: number;
-          meta?: any;
-        };
-
-        if (metaResult && metaResult.success === 1 && metaResult.meta) {
-          finalMetadata = metaResult.meta;
-        }
-      } catch (err) {
-        console.warn("No se pudieron obtener los metadatos de la URL, pero el link se conservará:", err);
-      }
-    }
-    // 5. Datos del usuario autenticado
-   // AQUÍ UNIR BASE DE DATOS (Obtener usuario autenticado desde la sesión/BD)
-    const currentUser = {
-      id: "user_created_123",
-      username: "UsuarioRegistrado",
-      avatar: "" // Dejar vacío para renderizar el círculo blanco si aún no tiene avatar en BD
+    let payload: {
+      title: string;
+      content: string;
+      communityId: string;
+      tags?: string[];
+      links?: string[];
     };
 
-    // 6. Construcción del objeto de la nueva publicación
-    const newPost: MockPost = {
-      id: `post_${crypto.randomUUID().substring(0, 8)}`,
-      title: title.trim(),
-      content: postText,
-      community: community || "General",
-      tags: tagsArray,
-      author: {
-        id: currentUser.id, 
-        username: currentUser.username,
-        avatar: currentUser.avatar
-      },
-      createdAt: new Date(),
-      votes: 0,
-      repliesCount: 0,
-      status: "Abierto" as const,
-      replies: [],
-      links: cleanUrl ? [cleanUrl] : [],
-      linkMetadata: finalMetadata
-    };
+    if (formData instanceof FormData) {
+      const title = formData.get("title") as string;
+      const content = (formData.get("postText") as string) || (formData.get("content") as string) || "";
+      const communityId = formData.get("communityId") as string;
+      const tagsStr = formData.get("tags") as string;
+      const tags = tagsStr ? tagsStr.split(",").map(t => t.trim().replace("#", "")) : [];
+      const link = formData.get("detectedUrl") as string;
+      const links = link ? [link] : [];
 
-    // 7. Persistencia de datos en el archivo JSON
-    let extraPosts: MockPost[] = [];
+      payload = { title, content, communityId, tags, links };
+    } else {
+      payload = formData;
+    }
+
+    if (!payload.title || !payload.title.trim()) {
+      return { success: false, error: "El título es obligatorio." };
+    }
+
+    if (!payload.communityId) {
+      return { success: false, error: "Debes seleccionar una comunidad." };
+    }
+
     try {
-      const contenidoJson = await fs.readFile(JSON_FILE_PATH, "utf-8");
-      extraPosts = JSON.parse(contenidoJson);
-    } catch (readError) {
-      const err = readError as { code?: string };
-      if (err.code !== "ENOENT") throw readError;
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const hasMembership = await isUserSubscribed(user.id, payload.communityId);
+        if (!hasMembership) {
+          return { 
+            success: false, 
+            error: "Debes estar suscrito a esta comunidad para poder publicar en ella." 
+          };
+        }
+      }
+    } catch (subError) {
+      console.warn("Validación de membresía ignorada en dev:", subError);
     }
 
-    extraPosts.push(newPost);
-    await fs.writeFile(JSON_FILE_PATH, JSON.stringify(extraPosts, null, 2), "utf-8");
+    const result = await createPost(payload);
 
-    // 8. Actualización del estado en memoria y revalidación de Next.js
-    mockPosts.push(newPost);
-    revalidatePath("/");
-
-    return { success: true, message: "Post creado correctamente." };
-
+    if (result.success) {
+      revalidatePath("/");
+    }
+    return result;
   } catch (error) {
     console.error("Error en createPostAction:", error);
-    return { success: false, error: "Error interno en el servidor." };
+    return { success: false, error: "Error interno al conectar con la base de datos." };
   }
 }
 
-export async function getPostsAction(filter?: string): Promise<MockPost[]> {
+export async function getPostsAction(filter?: string): Promise<UnifiedPost[]> {
   try {
-    const service = PostServiceFactory.getService();
-    return await service.getPosts(filter);
+    return await getPosts(filter);
   } catch (error) {
     console.error("Error en getPostsAction:", error);
     return [];
