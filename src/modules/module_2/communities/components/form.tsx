@@ -391,7 +391,7 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
                                     value={formData.name_community}
                                     onChange={handleChangeName}
                                     autoComplete="off"
-                                    className="w-full px-4 py-2 bg-white rounded-md text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 
+                                    className="w-full px-4 py-2 bg-white text-gray-900 rounded-md text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 
                                     placeholder-gray-400 shadow-sm hover:ring-2 hover:ring-blue-300 disabled:bg-gray-200 disabled:text-gray-800 disabled:border-gray-200 
                                     disabled:cursor-not-allowed disabled:opacity-75 transition-colors" />
 
@@ -407,7 +407,7 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
                                     disabled={isPending} 
                                     value={formData.description_community}
                                     onChange={handleChangeDescription}
-                                    className="w-full px-4 py-2 bg-white rounded-md resize-none text-sm border border-gray-200 focus:outline-none focus:ring-2 
+                                    className="w-full px-4 py-2 bg-white text-gray-900 rounded-md resize-none text-sm border border-gray-200 focus:outline-none focus:ring-2 
                                     focus:ring-blue-500 placeholder-gray-400 shadow-sm hover:ring-2 hover:ring-blue-300 disabled:bg-gray-200 disabled:text-gray-800 
                                     disabled:border-gray-200 disabled:cursor-not-allowed disabled:resize-none disabled:opacity-75 transition-colors" 
                                     placeholder="Escribe tu descripcion aqui..."></textarea>
