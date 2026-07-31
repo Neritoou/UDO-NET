@@ -22,7 +22,7 @@ export function CardCommunities({ item, basePath = "/communities" }: { item: Com
             <div className="relative w-full overflow-hidden rounded-2xl bg-gray-900 mt-3">
                 {item.banner_url != null 
                 ? 
-                    <div className="relative h-30 w-full bg-gray-800">
+                    <div className="relative h-20 w-full bg-gray-800">
                         <Image
                             src={item.banner_url}
                             alt="Communitys Banner"
@@ -31,10 +31,10 @@ export function CardCommunities({ item, basePath = "/communities" }: { item: Com
                             className="object-cover" />
                     </div>
                 :
-                    <div className={`relative h-30 w-full overflow-hidden bg-gradient-to-r ${selectedGradient} p-4`}>
+                    <div className={`relative h-20 w-full overflow-hidden bg-gradient-to-r ${selectedGradient} p-4`}>
                         <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
                             
-                        <div className="relative z-10 flex item-center gap-2">
+                        <div className="relative z-10 flex items-center gap-2">
                             <span className="rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur-md">
                                 {item.parent_id == null ? "Comunidad" : "Subcomunidad"}
                             </span>
@@ -43,7 +43,7 @@ export function CardCommunities({ item, basePath = "/communities" }: { item: Com
                 }
 
                 <div className="relative px-5">
-                    <div className="absolute -top-6 flex item-center gap-3">
+                    <div className="absolute -top-6 flex items-center gap-3">
                         {item.icon_url != null 
                         ? 
                             <Image
@@ -53,22 +53,24 @@ export function CardCommunities({ item, basePath = "/communities" }: { item: Com
                                 height={64}
                                 className="h-16 w-16 rounded-full border-4 object-cover border-gray-900" />
                         :
-                            <div className="flex h-14 w-14 item-center justify-center rounded-full border-4 text-lg font-bold text-white sm:h-16 sm:w-16 sm:text-xl border-gray-900 bg-slate-700">
-                                {item.parent_id == null ? "S" : item.created_by?.substring(0,1)}
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full border-4 text-lg font-bold text-white sm:h-16 sm:w-16 sm:text-xl border-gray-900 bg-slate-700">
+                                {item.name.charAt(0).toUpperCase()}
                             </div>
                         }
-                        <div className="flex flex-col text-xs pt-6">
-                            <span className="font-semibold text-white">
-                                {item.parent_id == null ? "SICEUDO" : item.created_by}
-                            </span>
-                            <span className="text-gray-400">
-                                {formatDate(item.created_at)}
-                            </span>
-                        </div>
+                        {item.parent_id != null && (
+                            <div className="flex flex-col text-xs pt-6">
+                                <span className="font-semibold text-white">
+                                    Creado por un miembro
+                                </span>
+                                <span className="text-gray-400">
+                                    {formatDate(item.created_at)}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                <div className="p-5 pt-9 mt-3">
+                <div className="p-5 pt-10 mt-3">
                     <h3 className="text-xl font-bold text-white">
                         {item.name}
                     </h3>

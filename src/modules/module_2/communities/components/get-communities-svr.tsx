@@ -1,4 +1,5 @@
-import { getAllCommunities, getSubcommunities, getCommunityBySlug } from "@module_2/communities/services/community.service";
+// src/modules/module_2/communities/components/get-communities-svr.tsx
+import { getAllCommunities, getSubcommunities } from "@module_2/communities/services/community.service";
 import { InstrustiveAlert } from "@module_2/communities/components/alert";
 import { Community } from "@/lib/types";
 import { CardCommunities } from "@/modules/module_2/communities/components/card-communities";
@@ -7,7 +8,6 @@ import MobilePanelToggle from "@module_2/communities/components/mobile-panel-tog
 
 export async function GetCommunitiesSC(){
     const communities:Community[] = await getAllCommunities();
-
     return(
         <>
             {communities.length == 0 ? (
@@ -23,34 +23,33 @@ export async function GetCommunitiesSC(){
     );
 };
 
-export async function GetSubcommunitiesSC({ slugCommunity }: { slugCommunity:string }){
-    const parentCommunity:Community | null = await getCommunityBySlug(slugCommunity);
-    const subCommunities:Community[] = parentCommunity ? await getSubcommunities(parentCommunity.id) : [];
+interface IGETSUBCOMMUNITIES {
+    parentId: string;
+    parentSlug: string;
+    parentName: string;
+}
 
+export async function GetSubcommunitiesSC({ parentId, parentSlug, parentName }: IGETSUBCOMMUNITIES){
+    const subCommunities:Community[] = await getSubcommunities(parentId);
     return(
         <MobilePanelToggle title="Subcomunidades">
             <div className="space-y-3">
                 {subCommunities.length == 0 ? (
                     <InstrustiveAlert msg="No se ha encontrado ninguna subcomunidad" />
                 ) : (
-                    <>
-                        {subCommunities.map((subCommunity) => (
-                            <CardCommunities
-                                key={subCommunity.id}
-                                item={subCommunity}
-                                basePath={`/communities/${slugCommunity}`}
-                            />
-                        ))}
-                    </>
+                    subCommunities.map((subCommunity) => (
+                        <CardCommunities
+                            key={subCommunity.id}
+                            item={subCommunity}
+                            basePath={`/communities/${parentSlug}`}
+                        />
+                    ))
                 )}
-
-                {parentCommunity && (
-                    <AddSubCommunity
-                        parentId={parentCommunity.id}
-                        parentSlug={parentCommunity.slug}
-                        parentName={parentCommunity.name}
-                    />
-                )}
+                <AddSubCommunity
+                    parentId={parentId}
+                    parentSlug={parentSlug}
+                    parentName={parentName}
+                />
             </div>
         </MobilePanelToggle>
     );
