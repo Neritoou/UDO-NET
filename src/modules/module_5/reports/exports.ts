@@ -1,2 +1,2 @@
-// Funciones expuestas para otros módulos
-// export { getReportsForContent, hasActiveReports } from './services/report.service'
+export { ReportPriorityService } from "./services/report-priority.service";
+export { ReportActionsService } from "./services/report-actions.service";
