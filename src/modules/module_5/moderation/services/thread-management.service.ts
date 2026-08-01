@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/db";
+import { createClient } from "@/lib/db/server";
 import { User } from "@/lib/types";
 import { verifyModeratorPermission } from "@module_5/moderation/exports";
 
@@ -13,6 +13,8 @@ export class ThreadManagementService {
     const auth = verifyModeratorPermission(moderator);
     if (!auth.isAuthorized) throw new Error(auth.reason);
 
+    const supabase = await createClient();
+    
     const { error } = await supabase
       .from("posts")
       .update({ is_pinned })
@@ -32,6 +34,7 @@ export class ThreadManagementService {
     const auth = verifyModeratorPermission(moderator);
     if (!auth.isAuthorized) throw new Error(auth.reason);
 
+    const supabase = await createClient();
     const newStatus = is_solved ? "closed" : "open";
 
     const { error } = await supabase

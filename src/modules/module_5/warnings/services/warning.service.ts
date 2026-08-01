@@ -1,9 +1,8 @@
-import { supabase } from "@/lib/db";
+import { createClient } from "@/lib/db/server";
 import { User } from "@/lib/types";
 import { Warning } from "@/lib/types/warning";
 import { verifyModeratorPermission } from "@module_5/moderation/exports";
 
-// Límite definido para la pérdida de capacidades de publicación
 const WARNING_LIMIT = 3; 
 
 export class WarningService {
@@ -25,6 +24,8 @@ export class WarningService {
     const auth = verifyModeratorPermission(moderator);
     if (!auth.isAuthorized) throw new Error(auth.reason);
 
+    const supabase = await createClient();
+    
     const { error } = await supabase
       .from("warnings")
       .insert({
@@ -45,13 +46,14 @@ export class WarningService {
    * @returns Arreglo de advertencias activas.
    */
   public async getActiveUserWarnings(userId: string): Promise<Warning[]> {
+    const supabase = await createClient();
     const now = new Date().toISOString();
 
     const { data, error } = await supabase
       .from("warnings")
       .select("*")
       .eq("user_id", userId)
-      .gt("expires_at", now); // Solo advertencias que no han expirado
+      .gt("expires_at", now);
 
     if (error) throw new Error(`Failed to fetch user warnings: ${error.message}`);
     return data as Warning[];
