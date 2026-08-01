@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { castVote } from '../actions/votes.actions'; // 👈 Tu Server Action seguro
+import { castVote } from '../actions/votes.actions'; // Tu Server Action seguro
 
 // 1. Iconos SVG Nativos del Design System (Enviados por el Grupo 3)
 function UpvoteIcon({ active = false, className = "w-8 h-8" }: { active?: boolean; className?: string }) {
@@ -76,7 +76,7 @@ export default function VoteManager({
     setIsLoading(true);
 
     try {
-      // 👈 MANTENEMOS TU SERVER ACTION (Evita usar fetch de rutas API eliminadas)
+      // SERVER ACTION 
       const response = await castVote(replyId, value);
 
       if (!response.success) {
