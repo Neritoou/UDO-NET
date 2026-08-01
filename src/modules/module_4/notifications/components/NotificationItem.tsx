@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { Notification } from '@/modules/module_4/types';
+import type { Notification } from '@/lib/types/notification';
 import { formatDate } from '@/lib/utils/formatDate';
 /**
  * Props del componente NotificationItem.
@@ -12,7 +12,7 @@ interface NotificationItemProps {
 }
 
 /**
- * Mapa de tipos de notificación a etiquetas legibles y estilos.
+ * Mapa de tipos de notificación a etiquetas legibles y configuración de ícono.
  */
 const typeConfig: Record<string, { label: string; icon: string }> = {
   reply: { label: 'Nueva Respuesta', icon: '💬' },
@@ -44,7 +44,7 @@ export default function NotificationItem({ notification, onMarkRead }: Notificat
       className={`flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left transition-all duration-200 hover:bg-blue-100
         ${notification.is_read ? 'bg-white' : 'bg-blue-50'}`}
     >
-      {/* Indicador de no leída + Icono */}
+      {/* Indicador de no leída + ícono del tipo */}
       <div className="relative flex-shrink-0 pt-0.5">
         <span className="text-lg">{config.icon}</span>
         {!notification.is_read && (
@@ -52,7 +52,7 @@ export default function NotificationItem({ notification, onMarkRead }: Notificat
         )}
       </div>
 
-      {/* Contenido */}
+      {/* Contenido de texto de la notificación */}
       <div className="flex-1 min-w-0">
         <p className="text-sm">
           <span className="font-bold text-gray-900">{config.label}</span>
@@ -62,7 +62,7 @@ export default function NotificationItem({ notification, onMarkRead }: Notificat
         </p>
       </div>
 
-      {/* Timestamp */}
+      {/* Fecha y hora de la notificación */}
       <span className="flex-shrink-0 text-xs text-gray-400">
        {formatDate(notification.created_at)}
       </span>
