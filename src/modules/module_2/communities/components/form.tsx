@@ -6,7 +6,9 @@ import Image from "next/image";
 import Loader from "@module_2/communities/components/loader";
 import { ErrAlert } from "@module_2/communities/components/alert";
 import { generateSlug } from "@/lib/utils/generateSlug";
-import { createSubcommunityAction, uploadCommunityBannerAction, uploadCommunityIconAction } from "@module_2/communities/actions/community.actions";
+import { createSubcommunityAction, deleteSubcommunityAction, uploadCommunityBannerAction, uploadCommunityIconAction } from "@module_2/communities/actions/community.actions";
+import { resizeImage, validateImage } from "@/lib/storage/transform";
+import { IMAGE_PRESETS } from "@/lib/storage/presets";
 
 interface IDATAFORM{
     url_banner: File | undefined;
@@ -48,7 +50,6 @@ const MAX_LENGTH_NAME:number = 50;
 const MIN_LENGTH_NAME:number = 4;
 const MAX_LENGTH_DESCRIPTION:number = 500;
 const MIN_LENGTH_DESCRIPTION:number = 15;
-const MAX_BANNER_SIZE_MB:number = 5;
 
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
@@ -59,7 +60,8 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
-export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, parentSlug, parentName }: IMODALFORM){    const [formData, setFormData] = useState<IDATAFORM>(DATA_FORM);
+export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, parentSlug, parentName }: IMODALFORM){    
+    const [formData, setFormData] = useState<IDATAFORM>(DATA_FORM);
     const [msgErr, setMsgErr] = useState<IERRDATA>(ERR_DATA_FORM);
     const [msgErrSrv, setMsgErrSrv] = useState<string>("");
 
@@ -75,13 +77,6 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
     const handleSubmit = (e:SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const isValidName = validName(formData.name_community);
-        const isValidDescription = validDescription(formData.description_community);
-        const isValidBanner = validBanner(formData.url_banner);
-        const isValidPhoto = validPhoto(formData.url_user_photo);
-
-        if(!isValidName || !isValidDescription || !isValidBanner || !isValidPhoto) return;
-
         startTransition(async () => {
             try{
                 setMsgErrSrv("");
@@ -93,20 +88,37 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
                     return;
                 };
 
+                const rollbackCommunity = async (errorMessage: string) => {
+                    await deleteSubcommunityAction(result.data!.id);
+                    setMsgErrSrv(errorMessage);
+                };
+
                 if(formData.url_banner){
-                    const base64Banner = await fileToBase64(formData.url_banner);
-                    const bannerResult = await uploadCommunityBannerAction(result.data!.id, base64Banner);
-                    if (bannerResult.error) {
-                        setMsgErrSrv(`Error al subir el banner: ${bannerResult.error}`);
+                    try {
+                        const base64Banner = await fileToBase64(formData.url_banner);
+                        const bannerResult = await uploadCommunityBannerAction(result.data!.id, base64Banner);
+
+                        if (bannerResult.error) {
+                            await rollbackCommunity(`Error al subir el banner: ${bannerResult.error}`);
+                            return; 
+                        }
+                    } catch {
+                        await rollbackCommunity("Error al procesar el archivo del banner.");
                         return;
-                    };
+                    }
                 };
 
                 if (formData.url_user_photo) {
-                    const base64UserPhoto = await fileToBase64(formData.url_user_photo);
-                    const avatarRes = await uploadCommunityIconAction(result.data!.id, base64UserPhoto);
-                    if (avatarRes.error) {
-                        setMsgErrSrv(`Error avatar: ${avatarRes.error}`);
+                    try {
+                        const base64UserPhoto = await fileToBase64(formData.url_user_photo);
+                        const avatarRes = await uploadCommunityIconAction(result.data!.id, base64UserPhoto);
+
+                        if (avatarRes.error) {
+                            await rollbackCommunity(`Error avatar: ${avatarRes.error}`);
+                            return;
+                        }
+                    } catch {
+                        await rollbackCommunity("Error al procesar el archivo del avatar.");
                         return;
                     }
                 };
@@ -123,28 +135,50 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
     };
 
     //BLOCK BANNER
-    const validBanner = (file: File | undefined):boolean => {
-        if(file){
-            const maxSizeBytes:number = MAX_BANNER_SIZE_MB * 1024 * 1024;
-            if (file.size > maxSizeBytes) {
-                setMsgErr((prevState) => ({...prevState, err_banner: `La imagen no puede superar los ${MAX_BANNER_SIZE_MB}MB.`}));
-                return false;
-            }
-        }
+    const validBanner = async (file: File | undefined):Promise<File | null> => {
+        if(!file){
+            setMsgErr((prevState) => ({ ...prevState, err_banner: "" }));
+            return null;
+        };
 
-        setMsgErr((prevState) => ({ ...prevState, err_banner: "" }));
-        return true;
+        const config = { 
+            maxSize: IMAGE_PRESETS.communityBanner.maxSize,
+            allowedTypes: IMAGE_PRESETS.communityBanner.allowedTypes
+        };
+        const errorType = await validateImage(file, config);
+
+        if (errorType) {
+            setMsgErr((prevState) => ({ ...prevState, err_banner: errorType }));
+            return null;
+        };
+
+        try {
+            const resizedBlob = await resizeImage(file, IMAGE_PRESETS.communityBanner.dimensions);
+
+            const resizedFile = new File([resizedBlob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+                type: 'image/webp',
+                lastModified: Date.now(),
+            });
+
+            return resizedFile;
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Error al procesar la imagen.';
+            setMsgErr((prevState) => ({ ...prevState, err_banner: message }));
+            return null;
+        };
     };
 
-    const handleBannerChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const file:File | undefined = e.target.files?.[0];
+    const handleBannerChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const rawFile:File | undefined = e.target.files?.[0];
 
-        const isValid:boolean = validBanner(file);
+        const processedFile = await validBanner(rawFile);
 
-        if (file && isValid) {
-            setFormData((prev) => ({ ...prev, url_banner: file }));
-            setBannerPreview(URL.createObjectURL(file));
-        }
+        if (processedFile) {
+            setMsgErr((prev) => ({ ...prev, err_banner: "" }));
+            setFormData((prev) => ({ ...prev, url_banner: processedFile }));
+            setBannerPreview(URL.createObjectURL(processedFile));
+        };
     };
 
     const handleRemoveBanner = (e: MouseEvent<HTMLButtonElement>) => {
@@ -162,27 +196,50 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
     };
 
     //BLOCK PHOTO
-    const validPhoto = (file: File | undefined):boolean => {
-        if(file){
-            const maxSizeBytes:number = MAX_BANNER_SIZE_MB * 1024 * 1024;
-            if (file.size > maxSizeBytes) {
-                setMsgErr((prevState) => ({...prevState, err_photo: `La imagen no puede superar los ${MAX_BANNER_SIZE_MB}MB.`}));
-                return false;
-            }
-        }
+    const validPhoto = async (file: File | undefined):Promise<File | null> => {
+        if(!file){
+            setMsgErr((prevState) => ({ ...prevState, err_photo: "" }));
+            return null;
+        };
 
-        setMsgErr((prevState) => ({ ...prevState, err_photo: "" }));
-        return true;
+        const config = { 
+            maxSize: IMAGE_PRESETS.communityIcon.maxSize,
+            allowedTypes: IMAGE_PRESETS.communityIcon.allowedTypes
+        };
+        const errorType = await validateImage(file, config);
+
+        if (errorType) {
+            setMsgErr((prevState) => ({ ...prevState, err_photo: errorType }));
+            return null;
+        };
+
+        try {
+            const resizedBlob = await resizeImage(file, IMAGE_PRESETS.communityIcon.dimensions);
+
+            const resizedFile = new File([resizedBlob], file.name.replace(/\.[^/.]+$/, ".webp"), {
+                type: 'image/webp',
+                lastModified: Date.now(),
+            });
+
+            return resizedFile;
+
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Error al procesar la imagen.';
+            setMsgErr((prevState) => ({ ...prevState, err_photo: message }));
+            return null;
+        };
+
     };
 
-    const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
-        const file:File | undefined = e.target.files?.[0];
+    const handlePhotoChange = async (e: ChangeEvent<HTMLInputElement>) => {
+        const rawFile:File | undefined = e.target.files?.[0];
 
-        const isValid:boolean = validPhoto(file);
+        const processedFile = await validPhoto(rawFile);
 
-        if (file && isValid) {
-            setFormData((prev) => ({ ...prev, url_user_photo: file }));
-            setPhotoPreview(URL.createObjectURL(file));
+        if (processedFile) {
+            setMsgErr((prev) => ({...prev, err_photo: ""}));
+            setFormData((prev) => ({ ...prev, url_user_photo: processedFile }));
+            setPhotoPreview(URL.createObjectURL(processedFile));
         }
     };
 
@@ -201,26 +258,25 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
     };
 
     //BLOCK OF NAME AND DESCRIPTION
-    const validName = (value:string): boolean => {
+    const validName = (value:string) => {
         if(!value.trim()){
             setMsgErr(prevState => ({...prevState, err_name:"El nombre de la subcomunidad es obligatorio"}));
-            return false;
+            return;
         }
         if(value.length < MIN_LENGTH_NAME){
             setMsgErr(prevState => ({...prevState, err_name:`El nombre debe superar los ${MIN_LENGTH_NAME} caracteres.`}));
-            return false;
+            return;
         }
         if(value.length > MAX_LENGTH_NAME){
             setMsgErr(prevState => ({...prevState, err_name:`El nombre no puede superar los ${MAX_LENGTH_NAME} caracteres.`}));
-            return false;
+            return;
         }
         if(!generateSlug(value.trim())){
             setMsgErr(prevState => ({...prevState, err_name:"El nombre de la subcomunidad no es valido"}));
-            return false;
+            return;
         } 
 
         setMsgErr(prevState => ({...prevState, err_name: ""}));
-        return true;
     };
 
     const handleChangeName = (e: ChangeEvent<HTMLInputElement>) => {
@@ -234,22 +290,21 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
         validName(value);
     };
 
-    const validDescription = (value:string):boolean => {
+    const validDescription = (value:string) => {
         if(!value.trim()){ 
             setMsgErr(prevState => ({...prevState, err_description: "La descripción de la subcomunidad es obligatoria"}));
-            return false;
+            return;
         }
         if(value.length < MIN_LENGTH_DESCRIPTION){
             setMsgErr(prevState => ({...prevState, err_description:`La descripción debe superar los ${MIN_LENGTH_DESCRIPTION} caracteres`}));
-            return false;
+            return;
         }
         if(value.length > MAX_LENGTH_DESCRIPTION){
             setMsgErr(prevState => ({...prevState, err_description:`La descripción no puede superar los ${MAX_LENGTH_DESCRIPTION} caracteres.`}));
-            return false;
+            return;
         }
 
         setMsgErr(prevState => ({...prevState, err_description: ""}));
-        return true;
     };
 
     const handleChangeDescription = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -272,7 +327,7 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
                     <h2 className="text-xl font-bold text-gray-900 mx-auto pl-6">
                         Crear una Subcomunidad de {parentName}
                     </h2>
-                    <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100" onClick={() => { setIsOpen(false); setMsgErr(ERR_DATA_FORM) }}>
+                    <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100" onClick={() => { setIsOpen(false); setMsgErr(ERR_DATA_FORM); setMsgErrSrv(""); }}>
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -328,7 +383,7 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
                             <div className="flex items-center gap-3">
                                 <div className="relative group">
                                 <label
-                                    className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-sm transition-all overflow-hidden relative ${
+                                    className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-dashed border-transparent hover:border-gray-500 shadow-sm transition-all overflow-hidden relative ${
                                         isPending
                                         ? 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-60'
                                         : 'bg-gray-200 border-gray-300 cursor-pointer hover:bg-gray-300'
@@ -394,7 +449,9 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
                                     className="w-full px-4 py-2 bg-white text-gray-900 rounded-md text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 
                                     placeholder-gray-400 shadow-sm hover:ring-2 hover:ring-blue-300 disabled:bg-gray-200 disabled:text-gray-800 disabled:border-gray-200 
                                     disabled:cursor-not-allowed disabled:opacity-75 transition-colors" />
-
+                                <p className="text-right text-xs text-slate-500">
+                                    {formData.name_community.length}/50
+                                </p>
                                 {msgErr.err_name && 
                                     <ErrAlert msg={msgErr.err_name} />
                                 }
