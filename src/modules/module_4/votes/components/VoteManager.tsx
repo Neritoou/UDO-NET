@@ -103,8 +103,9 @@ export default function VoteManager({
         type="button"
         onClick={() => handleVote(1)}
         disabled={isAuthor || isLoading}
-        className={`p-0 border-0 bg-transparent transition-transform ${isAuthor ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-105'
-          }`}
+        className={`p-0 border-0 bg-transparent transition-transform ${
+          isAuthor ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-105'
+        }`}
         title={isAuthor ? 'No puedes votar tu propio contenido' : 'Votar positivo'}
         aria-label="Upvote"
       >
@@ -121,8 +122,9 @@ export default function VoteManager({
         type="button"
         onClick={() => handleVote(-1)}
         disabled={isAuthor || isLoading}
-        className={`p-0 border-0 bg-transparent transition-transform ${isAuthor ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-105'
-          }`}
+        className={`p-0 border-0 bg-transparent transition-transform ${
+          isAuthor ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-105'
+        }`}
         title={isAuthor ? 'No puedes votar tu propio contenido' : 'Votar negativo'}
         aria-label="Downvote"
       >
@@ -132,8 +134,9 @@ export default function VoteManager({
       {/* Toast de feedback */}
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-lg transition-all ${toast.type === 'error' ? 'bg-[#D13B00]' : 'bg-green-500'
-            }`}
+          className={`fixed bottom-6 right-6 z-50 rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-lg transition-all ${
+            toast.type === 'error' ? 'bg-[#D13B00]' : 'bg-green-500'
+          }`}
         >
           {toast.message}
         </div>
