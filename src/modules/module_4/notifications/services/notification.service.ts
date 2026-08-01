@@ -2,10 +2,17 @@ import { createClient } from '@/lib/db/server';
 import type { NotificationType } from '@/lib/types/notification';
 
 /**
- * Crea una notificación para un usuario, respetando sus preferencias.
- * @param userId - ID del usuario destinatario.
- * @param type - Tipo ('reply', 'vote', 'mention', 'warning', 'report').
- * @param referenceId - ID del recurso asociado.
+ * Crea una notificación para un usuario destinatario, respetando sus preferencias guardadas.
+ *
+ * Primero consulta la columna `notification_preferences` (JSONB) del usuario.
+ * Si el usuario ha desactivado explícitamente el tipo de notificación, el insert
+ * se omite de forma silenciosa. Si las preferencias no existen o el tipo está activado,
+ * se inserta una nueva fila en la tabla `notifications`.
+ *
+ * @param userId - UUID del destinatario de la notificación (referencia a users.id).
+ * @param type - Categoría de la notificación: 'reply' | 'vote' | 'warning' | 'report' | 'mention'.
+ * @param referenceId - UUID del recurso asociado (reply_id, post_id, etc.).
+ * @returns El objeto de notificación recién creado, o null si fue omitido o hubo un fallo.
  */
 export async function createNotification(
   userId: string,
@@ -15,7 +22,7 @@ export async function createNotification(
   try {
     const supabase = await createClient();
 
-    // 1. Consultar las preferencias del usuario
+    // Consulta las preferencias de notificación del usuario desde la tabla users.
     const { data: user, error: userError } = await supabase
       .from('users')
       .select('notification_preferences')
@@ -23,19 +30,17 @@ export async function createNotification(
       .single();
 
     if (userError || !user) {
-      console.error('Error al consultar preferencias:', userError?.message);
+      // No se pueden verificar las preferencias; se omite la notificación para no insertar sin consentimiento.
       return null;
     }
 
-    // 2. Verificar si el usuario tiene la preferencia activada para este tipo
+    // Si el usuario tiene preferencias configuradas y desactivó este tipo, se aborta.
     const preferences = user.notification_preferences as Record<string, boolean> | null;
-    
-    // Si preferences existe, pero el interruptor de este tipo está en false, abortamos
     if (preferences && preferences[type] === false) {
-      return null; // El usuario apagó esta notificación silenciosamente
+      return null;
     }
 
-    // 3. Si está encendida (o si no tiene preferencias configuradas), insertamos
+    // El usuario tiene este tipo de notificación activado (o no tiene preferencias definidas). Se inserta el registro.
     const { data: notification, error: insertError } = await supabase
       .from('notifications')
       .insert({
@@ -50,8 +55,8 @@ export async function createNotification(
     if (insertError) throw insertError;
 
     return notification;
-  } catch (error) {
-    console.error('Error inesperado en createNotification:', error);
+  } catch {
+    // Se retorna null para que los componentes que llamen a esta función puedan continuar sin fallar.
     return null;
   }
 }
