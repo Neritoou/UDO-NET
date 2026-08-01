@@ -17,7 +17,6 @@ export async function calculateWeight(userId: string): Promise<number> {
       .single();
 
     if (error) {
-      console.error('Error al consultar usuario para calcular peso:', error.message);
       return 1.0; // Peso por defecto en caso de error
     }
 
@@ -32,7 +31,6 @@ export async function calculateWeight(userId: string): Promise<number> {
 
     return 1.0;
   } catch (error) {
-    console.error('Error inesperado en calculateWeight:', error);
     return 1.0;
   }
 }
