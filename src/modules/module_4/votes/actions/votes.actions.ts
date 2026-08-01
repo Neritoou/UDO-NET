@@ -1,9 +1,9 @@
-'use server'; // 👈 Obligatorio al inicio del archivo
+'use server'; // Obligatorio al inicio del archivo
 
 import { createClient } from '@/lib/db/server';
 import { calculateWeight } from '@/modules/module_4/votes/services/weight.service';
 import { createNotification } from '@/modules/module_4/notifications/services/notification.service';
-import { revalidatePath } from 'next/cache'; // 👈 IMPORTANTE para actualizar la UI
+import { revalidatePath } from 'next/cache'; // IMPORTANTE para actualizar la UI
 
 /**
  * Registra un voto (upvote/downvote) en una respuesta usando Server Actions.
@@ -15,9 +15,10 @@ export async function castVote(replyId: string, value: 1 | -1) {
       return { success: false, error: 'Parámetros inválidos. Se requiere replyId y value (1 | -1).' };
     }
 
-    // Configuración del usuario mock asignado directamente
-    const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001'; 
-    const currentUserId = MOCK_USER_ID;
+    // TODO: Reemplazar este MOCK_USER_ID con el ID real de la sesión de Supabase Auth
+// una vez que el módulo de autenticación esté integrado.
+const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001'; 
+const currentUserId = MOCK_USER_ID;
 
     if (!currentUserId) {
       return { success: false, error: 'No se proporcionó el ID del usuario.' };
