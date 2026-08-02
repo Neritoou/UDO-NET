@@ -1,13 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createPost, getPosts, getPostsByUser, UnifiedPost } from "@module_3/posts/services/supabase-service";
+import { createPost, getPosts, getPostsByUser, UnifiedPost } from "@module_3/posts/services/post.service";
+import { getLinkMetadata } from "./links";
+import { Community } from "@/lib/types";
 import { 
   getUserMainCommunities, 
   getCommunityBySlug,
   isUserSubscribed 
 } from "@module_2/communities/exports";
-import { createClient } from "@/lib/db/server";
+
+const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
 
 export interface CommunityOption {
   id: string;
@@ -19,37 +22,28 @@ export async function getPostsByUserAction(userId: string): Promise<UnifiedPost[
     if (!userId) throw new Error("El userId es requerido");
     return await getPostsByUser(userId);
   } catch (error) {
-    console.error("Error obteniendo los posts del usuario:", error);
     return [];
   }
 }
 
 export async function getUserJoinedCommunitiesAction(): Promise<CommunityOption[]> {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const mainCommunities = await getUserMainCommunities(MOCK_USER_ID);
 
-    if (!user) return [];
-
-    const mainCommunities = await getUserMainCommunities(user.id);
-
-    return (mainCommunities || []).map((community: any) => ({
+    return (mainCommunities || []).map((community: Community) => ({
       id: community.id,
       name: community.name,
     }));
   } catch (error) {
-    console.error("Error al obtener las comunidades del usuario:", error);
-
     try {
       const generalCommunity = await getCommunityBySlug("temas-generales");
       if (generalCommunity) {
         return [{ id: generalCommunity.id, name: generalCommunity.name }];
       }
     } catch (fallbackError) {
-      console.error("Error al buscar la comunidad General:", fallbackError);
     }
 
-    return [];
+    return [{ id: "00000000-0000-0000-0000-000000000002", name: "General" }];
   }
 }
 
@@ -92,30 +86,45 @@ export async function createPostAction(formData: FormData | {
     }
 
     try {
-      const supabase = await createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (user) {
-        const hasMembership = await isUserSubscribed(user.id, payload.communityId);
-        if (!hasMembership) {
-          return { 
-            success: false, 
-            error: "Debes estar suscrito a esta comunidad para poder publicar en ella." 
-          };
-        }
+      const hasMembership = await isUserSubscribed(MOCK_USER_ID, payload.communityId);
+      if (!hasMembership) {
+        return { 
+          success: false, 
+          error: "Debes estar suscrito a esta comunidad para poder publicar en ella." 
+        };
       }
     } catch (subError) {
-      console.warn("Validación de membresía ignorada en dev:", subError);
     }
 
-    const result = await createPost(payload);
+    let linkMetadata: { title?: string | null; description?: string | null; image_url?: string | null } | undefined = undefined;
+    const detectedUrl = payload.links && payload.links.length > 0 ? payload.links[0] : undefined;
+
+    if (detectedUrl) {
+      try {
+        const metaRes = (await getLinkMetadata(detectedUrl)) as { success: number; meta?: { title?: string; description?: string; image?: { url?: string } } };
+        if (metaRes.success === 1 && metaRes.meta) {
+          linkMetadata = {
+            title: metaRes.meta.title || null,
+            description: metaRes.meta.description || null,
+            image_url: metaRes.meta.image?.url || null,
+          };
+        }
+      } catch (e) {
+        // metadata fetch failure ignored
+      }
+    }
+
+    const result = await createPost({
+      ...payload,
+      detectedUrl,
+      linkMetadata,
+    });
 
     if (result.success) {
       revalidatePath("/");
     }
     return result;
   } catch (error) {
-    console.error("Error en createPostAction:", error);
     return { success: false, error: "Error interno al conectar con la base de datos." };
   }
 }
@@ -124,7 +133,6 @@ export async function getPostsAction(filter?: string): Promise<UnifiedPost[]> {
   try {
     return await getPosts(filter);
   } catch (error) {
-    console.error("Error en getPostsAction:", error);
     return [];
   }
 }

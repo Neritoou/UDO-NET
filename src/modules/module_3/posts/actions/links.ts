@@ -1,5 +1,4 @@
 "use server"
-const debounceTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
 function decodeHtmlEntities(text: string): string {
   if (!text) return '';
@@ -246,40 +245,24 @@ export async function getLinkMetadata(inputUrl: string) {
     return { success: 0 as const, error: 'URL inválida o vacía' };
   }
 
-  // Cancelar temporizador anterior pendiente para esta misma URL exacta (debounce)
-  if (debounceTimeouts.has(inputUrl)) {
-    clearTimeout(debounceTimeouts.get(inputUrl)!);
-    debounceTimeouts.delete(inputUrl);
+  try {
+    const validated = validateUrl(inputUrl);
+    const url = validated.href;
+
+    const ytId = getYouTubeId(url);
+    if (ytId) {
+      return await getYouTubeMetadata(ytId, url);
+    }
+
+    return await getGenericMetadata(url);
+  } catch (error) {
+    console.error('Error en getLinkMetadata:', error);
+    return {
+      success: 0 as const,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'No se pudo obtener la previsualización del enlace.',
+    };
   }
-
-  return new Promise((resolve) => {
-    const timeout = setTimeout(async () => {
-      debounceTimeouts.delete(inputUrl);
-      try {
-        const validated = validateUrl(inputUrl);
-        const url = validated.href;
-
-        const ytId = getYouTubeId(url);
-        if (ytId) {
-          const result = await getYouTubeMetadata(ytId, url);
-          resolve(result);
-          return;
-        }
-
-        const result = await getGenericMetadata(url);
-        resolve(result);
-      } catch (error) {
-        console.error('Error en getLinkMetadata:', error);
-        resolve({
-          success: 0 as const,
-          error:
-            error instanceof Error
-              ? error.message
-              : 'No se pudo obtener la previsualización del enlace.',
-        });
-      }
-    }, 300);
-
-    debounceTimeouts.set(inputUrl, timeout);
-  });
 }
