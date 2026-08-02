@@ -27,8 +27,7 @@ export function ReportViewer({ report, onClose, onAction }: Props) {
       setLoading(true);
       await onAction(action, report.target_id, report.target_type);
       onClose();
-    } catch (err) {
-      console.error(err);
+    } catch {
     } finally {
       setLoading(false);
     }

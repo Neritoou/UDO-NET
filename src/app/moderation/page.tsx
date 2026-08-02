@@ -1,4 +1,5 @@
-import ReportsPanel from "@module_5/components/ReportsPanel";
+import ReportsPanel from "@module_5/reports/components/ReportsPanel";
+import { getPrioritizedReports } from "@module_5/reports/exports";
 import { createClient } from "@/lib/db/server";
 
 export const metadata = {
@@ -6,37 +7,9 @@ export const metadata = {
 };
 
 export default async function ModerationPage() {
-  // Comprobar que las variables de entorno estén definidas
-  const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return (
-      <main className="min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl rounded-xl bg-white p-6 shadow">
-          <h1 className="text-xl font-candal text-[#1E3B70]">Faltan variables de entorno</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Para usar la sección de moderación debes configurar tu conexión a Supabase.
-            Crea un archivo <strong>.env.local</strong> en la raíz del proyecto con las siguientes variables:
-          </p>
-          <pre className="mt-3 rounded bg-gray-100 p-3 text-sm">NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-public-key</pre>
-          <p className="mt-3 text-sm text-gray-600">Después reinicia el servidor de desarrollo.</p>
-        </div>
-      </main>
-    );
-  }
-
   const supabase = await createClient();
 
-  // Obtener usuario desde la sesión
-  let user: any = null;
-  try {
-    const { data: userData } = await supabase.auth.getUser();
-    user = (userData as any)?.user;
-  } catch (e) {
-    // ignore
-  }
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return (
@@ -49,7 +22,6 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-public-key</pre>
     );
   }
 
-  // Obtener rol desde tabla users
   const { data: userRec, error: userRecError } = await supabase
     .from("users")
     .select("role")
@@ -57,7 +29,6 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-public-key</pre>
     .single();
 
   if (userRecError) {
-    console.error("Failed to fetch user record:", userRecError);
     return (
       <main className="min-h-screen flex items-center justify-center p-8">
         <div className="max-w-2xl rounded-xl bg-white p-6 shadow">
@@ -68,8 +39,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-public-key</pre>
     );
   }
 
-  const role = (userRec as any)?.role;
-  if (!["admin", "moderator"].includes(role)) {
+  const role = (userRec as { role?: string })?.role;
+  if (!role || !["admin", "moderator"].includes(role)) {
     return (
       <main className="min-h-screen flex items-center justify-center p-8">
         <div className="max-w-2xl rounded-xl bg-white p-6 shadow">
@@ -80,10 +51,29 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-public-key</pre>
     );
   }
 
+  const reports = await getPrioritizedReports();
+
+  const postIds = reports.filter(r => r.target_type === 'post').map(r => r.target_id);
+  let reportedPostsMap: Record<string, { id: string; content: string }> = {};
+  
+  if (postIds.length > 0) {
+    const { data: postsData } = await supabase
+      .from('posts')
+      .select('id, content')
+      .in('id', postIds);
+      
+    if (postsData) {
+      reportedPostsMap = postsData.reduce((acc, post) => {
+        acc[post.id] = post;
+        return acc;
+      }, {} as Record<string, { id: string; content: string }>);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[url('/defaults/udonet-bg.jpg')] bg-cover p-8">
       <div className="mx-auto max-w-5xl rounded-2xl bg-white/90 p-6 shadow-lg">
-        <ReportsPanel />
+        <ReportsPanel initialReports={reports} reportedPosts={reportedPostsMap} />
       </div>
     </main>
   );
