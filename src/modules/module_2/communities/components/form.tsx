@@ -9,6 +9,7 @@ import { generateSlug } from "@/lib/utils/generateSlug";
 import { createSubcommunityAction, deleteSubcommunityAction, uploadCommunityBannerAction, uploadCommunityIconAction } from "@module_2/communities/actions/community.actions";
 import { resizeImage, validateImage } from "@/lib/storage/transform";
 import { IMAGE_PRESETS } from "@/lib/storage/presets";
+import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MIN_DESCRIPTION_LENGTH, MIN_NAME_LENGTH } from "@/lib/constants/communities";
 
 interface IDATAFORM{
     url_banner: File | undefined;
@@ -46,11 +47,6 @@ const ERR_DATA_FORM:IERRDATA = {
     err_photo: ""
 };
 
-const MAX_LENGTH_NAME:number = 50;
-const MIN_LENGTH_NAME:number = 4;
-const MAX_LENGTH_DESCRIPTION:number = 500;
-const MIN_LENGTH_DESCRIPTION:number = 15;
-
 const fileToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -76,12 +72,14 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
 
     const handleSubmit = (e:SubmitEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setMsgErrSrv("");
 
         startTransition(async () => {
             try{
-                setMsgErrSrv("");
 
                 const result = await createSubcommunityAction(formData.name_community, formData.description_community, parentId);
+
+                if(formData.name_community.length < MIN_NAME_LENGTH || formData.description_community.length < MIN_DESCRIPTION_LENGTH) return;
 
                 if(result.error){
                     setMsgErrSrv(result.error);
@@ -263,12 +261,12 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
             setMsgErr(prevState => ({...prevState, err_name:"El nombre de la subcomunidad es obligatorio"}));
             return;
         }
-        if(value.length < MIN_LENGTH_NAME){
-            setMsgErr(prevState => ({...prevState, err_name:`El nombre debe superar los ${MIN_LENGTH_NAME} caracteres.`}));
+        if(value.length < MIN_NAME_LENGTH){
+            setMsgErr(prevState => ({...prevState, err_name:`El nombre debe superar los ${MIN_NAME_LENGTH} caracteres.`}));
             return;
         }
-        if(value.length > MAX_LENGTH_NAME){
-            setMsgErr(prevState => ({...prevState, err_name:`El nombre no puede superar los ${MAX_LENGTH_NAME} caracteres.`}));
+        if(value.length > MAX_NAME_LENGTH){
+            setMsgErr(prevState => ({...prevState, err_name:`El nombre no puede superar los ${MAX_NAME_LENGTH} caracteres.`}));
             return;
         }
         if(!generateSlug(value.trim())){
@@ -295,12 +293,12 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
             setMsgErr(prevState => ({...prevState, err_description: "La descripción de la subcomunidad es obligatoria"}));
             return;
         }
-        if(value.length < MIN_LENGTH_DESCRIPTION){
-            setMsgErr(prevState => ({...prevState, err_description:`La descripción debe superar los ${MIN_LENGTH_DESCRIPTION} caracteres`}));
+        if(value.length < MIN_DESCRIPTION_LENGTH){
+            setMsgErr(prevState => ({...prevState, err_description:`La descripción debe superar los ${MIN_DESCRIPTION_LENGTH} caracteres`}));
             return;
         }
-        if(value.length > MAX_LENGTH_DESCRIPTION){
-            setMsgErr(prevState => ({...prevState, err_description:`La descripción no puede superar los ${MAX_LENGTH_DESCRIPTION} caracteres.`}));
+        if(value.length > MAX_DESCRIPTION_LENGTH){
+            setMsgErr(prevState => ({...prevState, err_description:`La descripción no puede superar los ${MAX_DESCRIPTION_LENGTH} caracteres.`}));
             return;
         }
 
@@ -449,9 +447,14 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
                                     className="w-full px-4 py-2 bg-white text-gray-900 rounded-md text-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 
                                     placeholder-gray-400 shadow-sm hover:ring-2 hover:ring-blue-300 disabled:bg-gray-200 disabled:text-gray-800 disabled:border-gray-200 
                                     disabled:cursor-not-allowed disabled:opacity-75 transition-colors" />
-                                <p className="text-right text-xs text-slate-500">
-                                    {formData.name_community.length}/50
-                                </p>
+                                <div className="flex justify-between items-center text-xs text-gray-600 min-h-[1rem]">
+                                    <span id="user-text" className="truncate max-w-[80%]">
+                                        /{generateSlug(parentName.trim())}/{generateSlug(formData.name_community.trim())}
+                                    </span>
+                                    <span className="ml-auto">
+                                        <span id="char-count">{formData.name_community.length}</span>/{MAX_NAME_LENGTH}
+                                    </span>
+                                </div>
                                 {msgErr.err_name && 
                                     <ErrAlert msg={msgErr.err_name} />
                                 }
@@ -468,7 +471,9 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
                                     focus:ring-blue-500 placeholder-gray-400 shadow-sm hover:ring-2 hover:ring-blue-300 disabled:bg-gray-200 disabled:text-gray-800 
                                     disabled:border-gray-200 disabled:cursor-not-allowed disabled:resize-none disabled:opacity-75 transition-colors" 
                                     placeholder="Escribe tu descripcion aqui..."></textarea>
-
+                                <p className="text-right text-xs text-slate-500">
+                                    {formData.description_community.length}/{MAX_DESCRIPTION_LENGTH}
+                                </p>
                                 {msgErr.err_description && 
                                     <ErrAlert msg={msgErr.err_description} />
                                 }

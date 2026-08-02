@@ -11,7 +11,9 @@ import { InstrustiveAlert } from "@module_2/communities/components/alert";
 import JoinCommunityComponent from "@module_2/communities/components/button-join";
 import LeaveCommunityComponent from "@module_2/communities/components/button-leave";
 import MobilePanelToggle from "@module_2/communities/components/mobile-panel-toggle";
-import Link from "next/link";
+import Image from "next/image";
+import EditSubcommunity from "@/modules/module_2/communities/components/button-edit";
+import DeleteSubcommunity from "@/modules/module_2/communities/components/button-delete";
 
 const MOCK_USER_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -45,24 +47,29 @@ export default async function SubcommunityPage({ params }: PageProps) {
             <div className="mx-auto max-w-7xl px-4 pb-10 sm:px-8">
 
                 <div className="relative h-40 sm:h-52 -mx-4 sm:mx-0">
-                    <div
-                        className="h-full w-full rounded-b-xl sm:rounded-xl bg-gradient-to-r from-amber-950 via-rose-950 to-purple-950"
-                        style={
-                            subcommunity.banner_url
-                                ? {
-                                    backgroundImage: `url(${subcommunity.banner_url})`,
-                                    backgroundSize: "cover",
-                                    backgroundPosition: "center",
-                                }
-                                : undefined
-                        }
-                    />
-                    <img
-                        src={subcommunity.icon_url ?? "/defaults/community_icon.svg"}
-                        className="absolute -bottom-10 left-4 sm:left-6 h-20 w-20 sm:h-24 sm:w-24 rounded-full border-4 border-gray-950 bg-gray-800 object-cover"
-                        alt={subcommunity.name}
-                    />
-                </div>
+                    <div className="relative h-full w-full rounded-b-xl sm:rounded-xl overflow-hidden bg-gradient-to-r from-cyan-950 via-blue-950 to-indigo-950">
+                        {subcommunity.banner_url && (
+                            <Image
+                                src={subcommunity.banner_url}
+                                alt={`${subcommunity.name} banner`}
+                                fill
+                                priority
+                                className="object-cover"
+                                sizes="(max-width: 640px) 100vw, (max-width: 1200px) 100vw, 1200px"
+                            />
+                        )}
+                        </div>
+                                    
+                        <div className="absolute -bottom-10 left-4 sm:left-6 h-20 w-20 sm:h-24 sm:w-24 rounded-full border-4 border-gray-950 bg-gray-800 overflow-hidden">
+                            <Image
+                                src={subcommunity.icon_url ?? "/defaults/community_icon.svg"}
+                                alt={subcommunity.name}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 640px) 80px, 96px"
+                            />
+                        </div>
+                    </div>
 
                 <section className="mt-12 sm:mt-14 px-1 sm:px-2">
                     <span className="text-xs text-gray-400">
@@ -83,12 +90,10 @@ export default async function SubcommunityPage({ params }: PageProps) {
                         )}
 
                         {canManage && (
-                            <Link
-                                href={`/communities/${slug}/${subslug}/edit`}
-                                className="px-4 py-1.5 border border-gray-700 text-gray-300 text-sm font-semibold rounded-full hover:bg-gray-800 transition"
-                            >
-                                Editar
-                            </Link>
+                            <>
+                                <EditSubcommunity community={parent} subcommunity={subcommunity} />
+                                <DeleteSubcommunity community={parent} subcommunity={subcommunity} />
+                            </>
                         )}
 
                         <span className="text-xs text-gray-500">

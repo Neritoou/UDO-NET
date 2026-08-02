@@ -3,29 +3,34 @@
 import { ChangeEvent, Dispatch, SetStateAction, useState, useTransition } from "react"
 import { deleteSubcommunityAction } from "@module_2/communities/actions/community.actions";
 import { ErrAlert } from "@module_2/communities/components/alert";
+import { Community } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 interface IMODALDELETE{
     isOpen: boolean;
     setIsOpen: Dispatch<SetStateAction<boolean>>;
+    community: Community;
+    subcommunity: Community;
 };
 
-export function ModalDelete({ isOpen, setIsOpen }: IMODALDELETE){
-    const [confirmInput, setConfirmInput] = useState<string>("")
-    const [errorMsg, setErrorMsg] = useState<string>("")
-    const [isPending, startTransition] = useTransition()
+export function ModalDelete({ isOpen, setIsOpen, community, subcommunity }: IMODALDELETE){
+    const [confirmInput, setConfirmInput] = useState<string>("");
+    const [errorMsg, setErrorMsg] = useState<string>("");
+    const [isPending, startTransition] = useTransition();
+    const router = useRouter();
 
     const handleDelete = () => {
         startTransition(async () => {
             setErrorMsg("");
 
-            const isValidDelete:boolean = confirmInput.trim() === "subCommunitySlug";
+            const isValidDelete:boolean = confirmInput.trim() === subcommunity.slug;
 
             if(!isValidDelete){
                 setErrorMsg("Asegurese de escribir correctamente lo pedido para eliminar");
                 return;
             };
 
-            const result = await deleteSubcommunityAction("subCommunitySlug")
+            const result = await deleteSubcommunityAction(subcommunity.id);
 
             if (result.error) {
                 setErrorMsg(result.error);
@@ -33,7 +38,7 @@ export function ModalDelete({ isOpen, setIsOpen }: IMODALDELETE){
             };
 
             if(result.data){
-                setIsOpen(false);
+                router.push(`/communities/${community.slug}`);
             };
         });
     };
@@ -55,7 +60,7 @@ export function ModalDelete({ isOpen, setIsOpen }: IMODALDELETE){
                         </h2>
                     </div>
 
-                    <button className="text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-50" onClick={() => setIsOpen(false)}>
+                    <button className="text-gray-400 hover:text-gray-600 transition-colors p-1.5 rounded-full hover:bg-gray-100 disabled:opacity-50" onClick={() => { setIsOpen(false); setConfirmInput("") }}>
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -66,20 +71,20 @@ export function ModalDelete({ isOpen, setIsOpen }: IMODALDELETE){
 
                 <div className="p-6 space-y-4">
                     <p className="text-sm text-gray-600 leading-relaxed">
-                        Esta acción <strong className="text-red-600 font-semibold">no se puede deshacer</strong>. Se eliminarán permanentemente todos los datos, publicaciones y configuraciones de <span className="font-semibold text-gray-900">communityName</span>.
+                        Esta acción <strong className="text-red-600 font-semibold">no se puede deshacer</strong>. Se eliminarán permanentemente todos los datos, publicaciones y configuraciones de <span className="font-semibold text-gray-900">{subcommunity.name}</span>.
                     </p>
 
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-gray-700">
-                            Escribe <span className="font-bold text-red-600">subCommunitySlug</span> para confirmar:
+                            Escribe <span className="font-bold text-red-600">{subcommunity.slug}</span> para confirmar:
                         </label>
                         <input
                             type="text"
                             value={confirmInput}
                             onChange={(e: ChangeEvent<HTMLInputElement>) => setConfirmInput(e.target.value)}
-                            placeholder="subCommunitySlug"
+                            placeholder="Example-here"
                             disabled={isPending}
-                            className="w-full px-4 py-2 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-50"
+                            className="w-full px-4 py-2 text-sm text-gray-700 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 disabled:bg-gray-50"
                         />
                     </div>
 
@@ -116,7 +121,7 @@ export function ModalDelete({ isOpen, setIsOpen }: IMODALDELETE){
                             Eliminando...
                             </>
                         ) : (
-                            'Eliminar Subcomunidad'
+                            'Eliminar'
                         )}
                         </button>
                     </div>
