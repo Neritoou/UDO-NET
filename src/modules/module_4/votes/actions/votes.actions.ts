@@ -1,25 +1,21 @@
-'use server'; // 👈 Obligatorio al inicio del archivo
+'use server';
 
 import { createClient } from '@/lib/db/server';
-import { calculateWeight } from '@/modules/module_4/votes/utils/calculateWeight';
-import { createNotification } from '@/modules/module_4/notifications/utils/triggerEvent';
-import type { VotePayload } from '@/modules/module_4/types';
-import { revalidatePath } from 'next/cache'; // 👈 IMPORTANTE para actualizar la UI
+import { calculateWeight } from '@/modules/module_4/votes/services/weight.service';
+import { createNotification } from '@/modules/module_4/notifications/services/notification.service';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Registra un voto (upvote/downvote) en una respuesta usando Server Actions.
  */
-export async function castVote(payload: VotePayload) {
+export async function castVote(replyId: string, value: 1 | -1) {
   try {
-    const { replyId, value } = payload;
-
-    // Validar el payload de entrada
     if (!replyId || (value !== 1 && value !== -1)) {
-      return { success: false, error: 'Payload inválido. Se requiere replyId y value (1 | -1).' };
+      return { success: false, error: 'Parámetros inválidos. Se requiere replyId y value (1 | -1).' };
     }
 
-    // Configuración del usuario mock asignado directamente
-    const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001'; 
+    // TODO: Reemplazar con getCurrentUser() cuando el Módulo 1 esté integrado.
+    const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
     const currentUserId = MOCK_USER_ID;
 
     if (!currentUserId) {
@@ -28,10 +24,10 @@ export async function castVote(payload: VotePayload) {
 
     const supabase = await createClient();
 
-    // 1. Anti-Self-Voting: Consultar quién es el autor de la respuesta
+    // 1. Anti-Self-Voting y validación de estado del post padre
     const { data: reply, error: replyError } = await supabase
       .from('replies')
-      .select('user_id')
+      .select('user_id, post_id')
       .eq('id', replyId)
       .single();
 
@@ -43,32 +39,54 @@ export async function castVote(payload: VotePayload) {
       return { success: false, error: 'No puedes votar tu propio contenido.' };
     }
 
-    // 2. Calcular peso dinámico del voto 
-    const weight = await calculateWeight(currentUserId);
+    const { data: post } = await supabase
+      .from('posts')
+      .select('status')
+      .eq('id', reply.post_id)
+      .single();
 
-    // 3. UPSERT del voto 
-    const { data: vote, error: voteError } = await supabase
+    if (post?.status === 'closed') {
+      return { success: false, error: 'No se permiten votos en publicaciones cerradas.' };
+    }
+
+    // 2. Verificar si ya existe un voto del usuario en esta respuesta
+    const { data: existingVote } = await supabase
       .from('votes')
-      .upsert(
-        {
+      .select('id, value')
+      .eq('user_id', currentUserId)
+      .eq('reply_id', replyId)
+      .maybeSingle();
+
+    const weight = await calculateWeight(currentUserId);
+    let shouldNotify = false;
+
+    // 3. Lógica de mutación (insertar, actualizar o eliminar)
+    if (existingVote) {
+      if (existingVote.value === value) {
+        const { error: deleteError } = await supabase.from('votes').delete().eq('id', existingVote.id);
+        if (deleteError) throw deleteError;
+      } else {
+        const { error: updateError } = await supabase
+          .from('votes')
+          .update({ value, weight })
+          .eq('id', existingVote.id);
+        if (updateError) throw updateError;
+        shouldNotify = true;
+      }
+    } else {
+      const { error: insertError } = await supabase
+        .from('votes')
+        .insert({
           user_id: currentUserId,
           reply_id: replyId,
           value,
           weight,
-        },
-        {
-          onConflict: 'user_id,reply_id', // 👈 Requiere restricción UNIQUE en Postgres
-        }
-      )
-      .select()
-      .single();
-
-    if (voteError) {
-      console.error('Error al insertar/actualizar voto:', voteError.message);
-      return { success: false, error: 'Error al registrar el voto.' };
+        });
+      if (insertError) throw insertError;
+      shouldNotify = true;
     }
 
-    // 4. Actualizar el vote_count de la respuesta de forma segura
+    // 4. Actualizar el vote_count de la respuesta
     const { data: votesAgg, error: aggError } = await supabase
       .from('votes')
       .select('value, weight')
@@ -86,20 +104,16 @@ export async function castVote(payload: VotePayload) {
         .eq('id', replyId);
     }
 
-    // 5. Notificar al autor de la respuesta 
-    try {
+    // 5. Notificar al autor solo si el voto se agregó o cambió
+    if (shouldNotify) {
       await createNotification(reply.user_id, 'vote', replyId);
-    } catch (notifError) {
-      console.error('Error al enviar la notificación:', notifError);
     }
 
-    // 6. Revalidar la caché bajo demanda para que la UI se actualice automáticamente
-    // Cambia '/' por la ruta específica de tus respuestas si aplica (ej: `/questions/${questionId}`)
+    // 6. Revalidar la caché
     revalidatePath('/', 'layout');
 
-    return { success: true, vote };
-  } catch (error) {
-    console.error('Error inesperado en castVote:', error);
+    return { success: true };
+  } catch {
     return { success: false, error: 'Error interno del servidor.' };
   }
 }

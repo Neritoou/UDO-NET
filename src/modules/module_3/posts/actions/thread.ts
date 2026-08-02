@@ -1,16 +1,10 @@
 'use server';
 
-import { mockPosts, MockPost } from '@module_3/posts/services/mock-data';
+import { getThread as getThreadService, UnifiedPost } from '@module_3/posts/services/post.service';
 
-export async function getThread(id: string): Promise<MockPost | null> {
+export async function getThread(id: string): Promise<UnifiedPost | null> {
     try {
-        const foundThread = mockPosts.find(post => post.id === id);
-        
-        if (!foundThread) {
-            return null;
-        }
-
-        return foundThread;
+        return await getThreadService(id);
     } catch (error) {
         console.error("Error al obtener el hilo:", error);
         return null;

@@ -1,2 +1,3 @@
-// Funciones expuestas para otros módulos
-// export { getVoteWeight, getVotesForReply, updateReputation } from './services/vote.service'
+export { default as VoteManager } from '../votes/components/VoteManager';
+export { default as UserBadge } from '../reputation/components/UserBadge';
+export { calculateWeight as getVoteWeight } from './services/weight.service';

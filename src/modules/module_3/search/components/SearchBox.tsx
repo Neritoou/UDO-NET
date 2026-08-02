@@ -2,35 +2,62 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import PopoverSelect from '../../components/PopoverSelect';
+import SearchInput from './SearchInput';
 
-export default function SearchBox() {
+interface SearchBoxProps {
+  children?: React.ReactNode;
+}
+
+export default function SearchBox({ children }: SearchBoxProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Inicializar estados con valores de la URL
+  // Inicializar estados desde los parámetros de búsqueda de la URL
   const queryParam = searchParams.get('q') || '';
-  const filterParam = searchParams.get('filter') || 'recientes';
+  const filterParam = searchParams.get('filter') || 'most_replied';
 
   const [searchTerm, setSearchTerm] = useState(queryParam);
   const [filter, setFilter] = useState(filterParam);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  // Sincronizar estados locales si cambian los parámetros de la URL externamente
+  // Estado para controlar que sólo un menú popover se abra a la vez
+  const [activePopover, setActivePopover] = useState<'topics' | 'filter' | null>(null);
+
+  // Opciones de Temas y Filtros
+  const topicOptions = [
+    { id: 'Sistemas', name: 'Sistemas' },
+    { id: 'Computación', name: 'Computación' },
+    { id: 'Básico', name: 'Básico' },
+  ];
+
+  const filterOptions = [
+    { id: 'most_replied', name: 'Más Respondidos' },
+    { id: 'most_recent', name: 'Más Recientes' },
+    { id: 'most_voted', name: 'Más Votados' },
+  ];
+
+  // Clase para botones
+  const filterButtonClass =
+    "h-[42px] bg-lite-white hover:bg-white-gray text-main-black font-candal font-normal text-p px-5 rounded-full flex items-center gap-3 transition-colors cursor-pointer border-0";
+
+  // Sincronizar estados con los parámetros URL cuando cambian externamente
   useEffect(() => {
     setSearchTerm(searchParams.get('q') || '');
-    setFilter(searchParams.get('filter') || 'recientes');
+    setFilter(searchParams.get('filter') || 'most_replied');
   }, [searchParams]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const params = new URLSearchParams(searchParams.toString());
-    
+
     if (searchTerm.trim()) {
       params.set('q', searchTerm.trim());
     } else {
       params.delete('q');
     }
     params.set('filter', filter);
-    
+
     router.push(`?${params.toString()}`);
   };
 
@@ -41,36 +68,78 @@ export default function SearchBox() {
     router.push(`?${params.toString()}`);
   };
 
+  const handleTagClick = (tag: string) => {
+    const cleanTag = tag.replace('#', '');
+    if (selectedTag === cleanTag) {
+      setSelectedTag(null);
+      setSearchTerm('');
+    } else {
+      setSelectedTag(cleanTag);
+      setSearchTerm(`#${cleanTag}`);
+    }
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('q', cleanTag);
+    router.push(`?${params.toString()}`);
+  };
+
   return (
-    <div className="bg-[#181818] border border-gray-850 p-5 rounded-xl space-y-4">
-      <h2 className="text-sm font-semibold text-gray-400">Filtrar y Buscar Publicaciones</h2>
+    <div className="bg-[#E5EBF3] rounded-[35px] p-0 space-y-4 w-full overflow-hidden">
 
-      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
-        <input 
-          type="text" 
-          placeholder="Busca por título, comunidad o tag..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 px-4 py-2.5 bg-[#121212] border border-gray-800 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-        />
-        
-        <select 
-          value={filter}
-          onChange={(e) => handleFilterChange(e.target.value)}
-          className="px-4 py-2.5 bg-[#121212] border border-gray-800 rounded-lg text-sm text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-        >
-          <option value="recientes">Más recientes</option>
-          <option value="votados">Más votados</option>
-          <option value="respuestas">Más respuestas</option>
-        </select>
+      {/* 1. Tarjeta Blanca del Buscador */}
+      <div className="bg-pure-white rounded-[30px] p-5 sm:p-6 w-full">
+        <form onSubmit={handleSearch} className="flex flex-col md:flex-row items-center justify-between gap-4">
 
-        <button 
-          type="submit" 
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-sm font-semibold rounded-lg transition-all shadow-md"
-        >
-          Buscar
-        </button>
-      </form>
+          {/* Campo Principal de Búsqueda */}
+          <div className="flex-1 w-full min-w-[200px]">
+            <SearchInput
+              placeholder="Buscar..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          {/* Selector Desplegable de Temas (Cierra Filtros automáticamente) */}
+          <div className="relative">
+            <PopoverSelect
+              label="Temas:"
+              options={topicOptions}
+              selectedValue={selectedTag || ''}
+              onSelect={(val) => handleTagClick(val)}
+              titleHeader="Temas"
+              showSearchInput={true}
+              searchPlaceholder="Buscar..."
+              popoverWidth="w-44"
+              originTop={false}
+              buttonClassName={filterButtonClass}
+              isOpen={activePopover === 'topics'}
+              onToggle={() => setActivePopover(prev => prev === 'topics' ? null : 'topics')}
+              onClose={() => setActivePopover(null)}
+            />
+          </div>
+
+          {/* Selector Desplegable de Filtro (Cierra Temas automáticamente) */}
+          <div className="relative">
+            <PopoverSelect
+              label="Filtro:"
+              options={filterOptions}
+              selectedValue={filter}
+              onSelect={(val) => handleFilterChange(val)}
+              titleHeader="Filtro"
+              popoverWidth="w-56"
+              originTop={false}
+              alignRight={true}
+              buttonClassName={filterButtonClass}
+              isOpen={activePopover === 'filter'}
+              onToggle={() => setActivePopover(prev => prev === 'filter' ? null : 'filter')}
+              onClose={() => setActivePopover(null)}
+            />
+          </div>
+
+        </form>
+      </div>
+
+      {/* 2. Publicaciones enlazadas al ras del fondo gris intermedio */}
+      {children}
     </div>
   );
 }

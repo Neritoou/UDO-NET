@@ -1,49 +1,71 @@
 "use client";
 
-import { Suspense } from 'react';
-import { CreatePostProvider, useCreatePost } from '@module_3/posts/exports';
+import { useState, Suspense } from 'react';
+import { CreatePostProvider } from '@module_3/posts/exports';
 import SearchBox from "@module_3/search/components/SearchBox";
 import ThreadView from '@module_3/posts/components/ThreadView';
 import PostList from '@module_3/posts/components/PostList';
-import { useThreadNavigation } from '@module_3/hooks/useThreadNavigation';
+import { UnifiedPost } from '@module_3/posts/services/supabase-service';
+import { CommunityOption } from '@module_3/posts/actions/post';
+import { getThread } from '@module_3/posts/actions/thread';
 
-function Module3Content() {
-  const { selectedThread, openThread, closeThread } = useThreadNavigation();
-  const { open: openCreatePost } = useCreatePost();
+interface Module3ContentProps {
+  initialPosts: UnifiedPost[];
+  communities: CommunityOption[];
+}
+
+function Module3Content({ initialPosts, communities }: Module3ContentProps) {
+  const [selectedThread, setSelectedThread] = useState<string | null>(null);
+  const [currentThread, setCurrentThread] = useState<UnifiedPost | null>(null);
+  const [loadingThread, setLoadingThread] = useState(false);
+
+  const openThread = async (id: string) => {
+    setLoadingThread(true);
+    setSelectedThread(id);
+    const data = await getThread(id);
+    setCurrentThread(data);
+    setLoadingThread(false);
+  };
+
+  const closeThread = () => {
+    setSelectedThread(null);
+    setCurrentThread(null);
+  };
 
   return (
-    <div className="max-w-[1000px] mx-auto bg-[#121212] border border-gray-850 min-h-[90vh] rounded-xl p-6 space-y-6 shadow-xl text-white">
-      {selectedThread ? ( 
-        <ThreadView threadId={selectedThread} onBack={closeThread} />
-      ) : (
-        <>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-850 pb-5">
-            <div className="flex-1">
-              <SearchBox />
-            </div>
-            
-            <div className="flex items-center">
-              <button
-                onClick={() => openCreatePost()}
-                className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-semibold text-sm rounded-lg transition-all shadow-md"
-              >
-                + Crear Publicación
-              </button>
-            </div>
+    <div className="max-w-[1000px] mx-auto">
+      {selectedThread ? (
+        loadingThread ? (
+          <div className="flex flex-col items-center justify-center p-12 space-y-3">
+            <div className="w-8 h-8 border-4 border-regular-blue border-t-transparent rounded-full animate-spin"></div>
+            <p className="font-candal font-normal text-p text-gray-custom">Cargando publicación...</p>
           </div>
-          
-          <PostList onSelectPost={openThread} />
-        </>
+        ) : (
+          <ThreadView
+            threadId={selectedThread}
+            initialThread={currentThread}
+            onBack={closeThread}
+          />
+        )
+      ) : (
+        <SearchBox>
+          <PostList posts={initialPosts} onSelectPost={openThread} />
+        </SearchBox>
       )}
     </div>
   );
 }
 
-export default function Module3Container() {
+interface Module3ContainerProps {
+  initialPosts: UnifiedPost[];
+  communities: CommunityOption[];
+}
+
+export default function Module3Container({ initialPosts, communities }: Module3ContainerProps) {
   return (
-    <CreatePostProvider>
-      <Suspense fallback={<div className="max-w-[1000px] mx-auto bg-[#121212] border border-gray-850 min-h-[90vh] rounded-xl p-12 text-center text-gray-400 text-sm shadow-xl">Cargando módulo...</div>}>
-        <Module3Content />
+    <CreatePostProvider communities={communities}>
+      <Suspense fallback={<div className="max-w-[1000px] mx-auto p-12 text-center font-candal font-normal text-gray-custom text-p">Cargando módulo...</div>}>
+        <Module3Content initialPosts={initialPosts} communities={communities} />
       </Suspense>
     </CreatePostProvider>
   );

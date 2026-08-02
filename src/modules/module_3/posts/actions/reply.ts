@@ -1,11 +1,9 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { mockPosts, MockReply } from '@module_3/posts/services/mock-data';
-import fs from 'fs/promises';
-import path from 'path';
-
-const JSON_FILE_PATH = path.join(process.cwd(), "src", "modules", "module_3", "posts", "services", "mock-posts-extra.json");
+import { addReply } from '@module_3/posts/services/reply.service';
+import { createNotification } from '@module_4/notifications/exports';
+import { createClient } from '@/lib/db/server';
 
 export async function addReplyAction(postId: string, parentId: string | null, content: string) {
     try {
@@ -13,72 +11,49 @@ export async function addReplyAction(postId: string, parentId: string | null, co
             return { success: false, error: "El contenido no puede estar vacío." };
         }
 
-        const newReply: MockReply = {
-            id: `resp_${crypto.randomUUID().substring(0, 8)}`,
-            author: { username: 'UsuarioActivo' },
-            content: content.trim(),
-            createdAt: new Date(),
-            votes: 0,
-            nestedReplies: []
-        };
+        const result = await addReply(postId, parentId, content);
 
-        const post = mockPosts.find(p => p.id === postId);
-        if (!post) {
-            return { success: false, error: "El post no existe." };
-        }
+        if (result.success) {
+            const supabase = await createClient();
 
-        if (parentId === null) {
-            post.replies.push(newReply);
-        } else {
-            const insertRecursive = (repliesList: MockReply[]): boolean => {
-                for (let r of repliesList) {
-                    if (r.id === parentId) {
-                        if (!r.nestedReplies) r.nestedReplies = [];
-                        r.nestedReplies.push(newReply);
-                        return true;
-                    }
-                    if (r.nestedReplies && insertRecursive(r.nestedReplies)) return true;
-                }
-                return false;
-            };
-            insertRecursive(post.replies);
-        }
-        post.repliesCount = (post.repliesCount || 0) + 1;
+            // 1. Notificar al autor del post (Módulo 4)
+            const { data: postData } = await supabase
+                .from('posts')
+                .select('author_id')
+                .eq('id', postId)
+                .single();
 
-        try {
-            const fileContent = await fs.readFile(JSON_FILE_PATH, 'utf-8');
-            let extraPosts = JSON.parse(fileContent);
-            const index = extraPosts.findIndex((p: any) => p.id === postId);
-            
-            if (index !== -1) {
-                extraPosts[index] = post;
-                await fs.writeFile(JSON_FILE_PATH, JSON.stringify(extraPosts, null, 2), 'utf-8');
+            if (postData?.author_id) {
+                await createNotification(postData.author_id, 'reply', postId);
             }
-        } catch {
-            // Si el post pertenece a los estáticos fijos, se mantiene en memoria sin error crítico
+
+            // 2. Procesar Menciones (Módulo 4)
+            const mentionRegex = /@([\w_]+)/g;
+            let match;
+            const mentionedUsers: string[] = [];
+
+            while ((match = mentionRegex.exec(content.trim())) !== null) {
+                mentionedUsers.push(match[1]);
+            }
+
+            if (mentionedUsers.length > 0) {
+                // Buscar los IDs de los usuarios usando sus usernames
+                const { data: usersData, error } = await supabase
+                    .from('users')
+                    .select('id, username')
+                    .in('username', mentionedUsers);
+
+                if (!error && usersData) {
+                    for (const user of usersData) {
+                        await createNotification(user.id, 'reply', postId);
+                    }
+                }
+            }
+
+            revalidatePath("/");
         }
-
-        revalidatePath("/");
-        return { success: true };
+        return result;
     } catch (error) {
-        console.error("Error al guardar respuesta:", error);
-        return { success: false, error: "No se pudo guardar la respuesta." };
-    }
-
-    const mentionRegex = /@([\w_]+)/g;
-    let match;
-    const mentionedUser : string[] = [];
-
-    while ((match = mentionRegex.exec(content.trim())) !== null) {
-        mentionedUser.push(match[1]); 
-    }
-
-    if (mentionedUser.length > 0) {
-
-        // conexiones al modulo 4
-        //import de funcion
-        //await modulo 4
-        
-        console.log("Usuario mencionado detectado:", mentionedUser);
+        return { success: false, error: "No se pudo guardar la respuesta en la base de datos." };
     }
 }
