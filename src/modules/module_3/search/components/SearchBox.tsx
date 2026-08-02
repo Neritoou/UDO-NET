@@ -15,7 +15,7 @@ export default function SearchBox({ children }: SearchBoxProps) {
 
   // Inicializar estados desde los parámetros de búsqueda de la URL
   const queryParam = searchParams.get('q') || '';
-  const filterParam = searchParams.get('filter') || 'respondidos';
+  const filterParam = searchParams.get('filter') || 'most_replied';
 
   const [searchTerm, setSearchTerm] = useState(queryParam);
   const [filter, setFilter] = useState(filterParam);
@@ -32,9 +32,9 @@ export default function SearchBox({ children }: SearchBoxProps) {
   ];
 
   const filterOptions = [
-    { id: 'respondidos', name: 'Más Respondidos' },
-    { id: 'recientes', name: 'Más Recientes' },
-    { id: 'votados', name: 'Más Votados' },
+    { id: 'most_replied', name: 'Más Respondidos' },
+    { id: 'most_recent', name: 'Más Recientes' },
+    { id: 'most_voted', name: 'Más Votados' },
   ];
 
   // Clase para botones
@@ -44,7 +44,7 @@ export default function SearchBox({ children }: SearchBoxProps) {
   // Sincronizar estados con los parámetros URL cuando cambian externamente
   useEffect(() => {
     setSearchTerm(searchParams.get('q') || '');
-    setFilter(searchParams.get('filter') || 'respondidos');
+    setFilter(searchParams.get('filter') || 'most_replied');
   }, [searchParams]);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {

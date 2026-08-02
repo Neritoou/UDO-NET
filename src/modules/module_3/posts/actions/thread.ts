@@ -1,6 +1,6 @@
 'use server';
 
-import { getThread as getThreadService, UnifiedPost } from '@module_3/posts/services/supabase-service';
+import { getThread as getThreadService, UnifiedPost } from '@module_3/posts/services/post.service';
 
 export async function getThread(id: string): Promise<UnifiedPost | null> {
     try {

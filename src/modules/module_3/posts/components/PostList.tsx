@@ -1,9 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { searchPosts } from '@module_3/search/actions/search';
-import { getPostsAction } from '@module_3/posts/actions/post';
 import { addReplyAction } from '@module_3/posts/actions/reply';
 import { UnifiedPost } from '@module_3/posts/services/supabase-service';
 import VoteManager from '@module_4/votes/components/VoteManager';
@@ -45,7 +43,7 @@ export function PostCard({
   const communityBreadcrumb = `F / ${post.community_name || 'General'}`;
   const relativeDate = formatDate(post.created_at);
 
-  const filter = searchParams.get('filter') || 'respondidos';
+  const filter = searchParams.get('filter') || 'most_replied';
 
   // Si tiene link detectado tomamos el primero
   const firstLink = post.links && post.links.length > 0 ? post.links[0] : null;
@@ -84,7 +82,7 @@ export function PostCard({
 
   return (
     <article className="bg-pure-white rounded-[30px] p-6 transition-all font-candal font-normal relative">
-      
+
       {toast && (
         <Toast
           message={toast.message}
@@ -229,20 +227,20 @@ export function PostCard({
       {/* Previsualización del enlace en la tarjeta */}
       {firstLink && (
         <div className="mt-3 mb-4">
-          <a 
-            href={firstLink.url} 
-            target="_blank" 
-            rel="noopener noreferrer" 
+          <a
+            href={firstLink.url}
+            target="_blank"
+            rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="flex items-center overflow-hidden bg-lite-white rounded-[20px] hover:bg-white-gray/50 transition group p-3 gap-4 border-0"
           >
             {firstLink.image_url && (
               <div className="relative w-28 h-20 sm:w-32 sm:h-20 flex-shrink-0 overflow-hidden rounded-[14px] bg-pure-white">
-                <img 
-                  src={firstLink.image_url} 
-                  alt={firstLink.title || 'Vista previa'} 
-                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" 
-                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} 
+                <img
+                  src={firstLink.image_url}
+                  alt={firstLink.title || 'Vista previa'}
+                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                 />
               </div>
             )}
@@ -300,19 +298,19 @@ export function PostCard({
           </div>
 
           {!isThreadView && post.status !== 'closed' && (
-            <form 
+            <form
               onSubmit={handleQuickReplySubmit}
               onClick={(e) => e.stopPropagation()}
               className="hidden sm:flex items-center bg-lite-white rounded-full border-2 border-main-blue w-64 h-[38px] overflow-hidden p-0 relative"
             >
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={quickReply}
                 onChange={(e) => setQuickReply(e.target.value)}
-                placeholder="Escribe una respuesta..." 
+                placeholder="Escribe una respuesta..."
                 className="bg-transparent border-0 text-tiny font-candal font-normal text-main-black placeholder:text-alpha-black focus:outline-none flex-1 pl-4 pr-2 min-w-0"
               />
-              <button 
+              <button
                 type="submit"
                 className="group/sendbtn h-[calc(100%+4px)] -mr-[2px] -my-[2px] aspect-square bg-main-blue hover:bg-dark-main-blue flex items-center justify-center border-0 text-pure-white cursor-pointer shrink-0 transition-all duration-200 rounded-full"
                 title="Enviar respuesta rápida"
@@ -324,10 +322,10 @@ export function PostCard({
         </div>
 
         {isThreadView ? (
-          <button 
+          <button
             type="button"
             disabled={post.status === 'closed'}
-            onClick={onMainReplyClick} 
+            onClick={onMainReplyClick}
             className="px-6 py-2.5 bg-regular-blue hover:bg-dark-main-blue disabled:opacity-50 text-pure-white font-candal font-normal text-p rounded-full transition-all cursor-pointer border-0 shadow-sm active:scale-95"
           >
             {post.status === 'closed' ? 'Hilo Cerrado' : showMainReplyBox ? 'Cancelar' : 'Responder al Hilo'}
@@ -349,49 +347,13 @@ export function PostCard({
 }
 
 export interface PostListProps {
+  posts: UnifiedPost[];
   onSelectPost?: (id: string) => void;
 }
 
-export default function PostList({ onSelectPost }: PostListProps) {
+export default function PostList({ posts, onSelectPost }: PostListProps) {
   const searchParams = useSearchParams();
-  const [posts, setPosts] = useState<UnifiedPost[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const query = searchParams.get('q') || '';
-  const filter = searchParams.get('filter') || 'respondidos';
-
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      try {
-        let results: UnifiedPost[] = [];
-        if (query.trim() === '') {
-          results = await getPostsAction(filter);
-        } else {
-          const tags = query.includes(',')
-            ? query.split(',').map(t => t.trim().toLowerCase())
-            : [];
-          results = await searchPosts(query, undefined, tags, filter);
-        }
-        setPosts(results);
-      } catch (error) {
-        console.error("Error al cargar publicaciones:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, [query, filter]);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 space-y-3">
-        <div className="w-8 h-8 border-4 border-main-blue border-t-transparent rounded-full animate-spin"></div>
-        <p className="font-candal font-normal text-p text-alpha-black">Cargando publicaciones...</p>
-      </div>
-    );
-  }
 
   if (posts.length === 0) {
     return (

@@ -1,8 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { addReply } from '@module_3/posts/services/supabase-service';
-import { createNotification } from '@module_4/notifications/services/notification.service';
+import { addReply } from '@module_3/posts/services/reply.service';
+import { createNotification } from '@module_4/notifications/exports';
 import { createClient } from '@/lib/db/server';
 
 export async function addReplyAction(postId: string, parentId: string | null, content: string) {
@@ -45,7 +45,7 @@ export async function addReplyAction(postId: string, parentId: string | null, co
 
                 if (!error && usersData) {
                     for (const user of usersData) {
-                        await createNotification(user.id, 'reply' as any, postId);
+                        await createNotification(user.id, 'reply', postId);
                     }
                 }
             }
@@ -54,7 +54,6 @@ export async function addReplyAction(postId: string, parentId: string | null, co
         }
         return result;
     } catch (error) {
-        console.error("Error al guardar respuesta:", error);
         return { success: false, error: "No se pudo guardar la respuesta en la base de datos." };
     }
 }
