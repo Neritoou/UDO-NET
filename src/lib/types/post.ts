@@ -1,4 +1,4 @@
-export type PostStatus = 'open' | 'closed'
+export type PostStatus = 'abierto' | 'cerrado'
 
 export type Post = {
   id: string

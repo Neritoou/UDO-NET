@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { getThread } from '@module_3/posts/actions/thread';
 import { addReplyAction } from '@module_3/posts/actions/reply';
@@ -14,11 +14,10 @@ import { PostCard } from './PostList';
 
 interface ThreadViewProp {
   threadId: string;
-  initialThread: UnifiedPost | null;
   onBack: () => void;
 }
 
-const MockUsers = ['Alejandro', 'Joyce_Valerio', 'Dano', 'Keiber'];
+const SUGGESTED_USERS = ['Alejandro', 'Joyce_Valerio', 'Dano', 'Keiber'];
 
 interface MentionTextareaProps {
   value: string;
@@ -63,7 +62,7 @@ function MentionTextarea({ value, onChange, placeholder, rows = 3, disabled }: M
     setShowMentions(false);
   };
 
-  const filteredUsers = MockUsers.filter(u => u.toLowerCase().includes(filterText));
+  const filteredUsers = SUGGESTED_USERS.filter(u => u.toLowerCase().includes(filterText));
 
   return (
     <div className="relative w-full">
@@ -230,10 +229,10 @@ function ReplyItem({ reply, postId, onAddReply, onShowToast, parentAuthorName }:
   );
 }
 
-export default function ThreadView({ threadId, initialThread, onBack }: ThreadViewProp) {
+export default function ThreadView({ threadId, onBack }: ThreadViewProp) {
   const router = useRouter();
-  const [thread, setThread] = useState<UnifiedPost | null>(initialThread);
-  const [loading, setLoading] = useState(false);
+  const [thread, setThread] = useState<UnifiedPost | null>(null);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const [showMainReplyBox, setShowMainReplyBox] = useState(false);
@@ -245,13 +244,15 @@ export default function ThreadView({ threadId, initialThread, onBack }: ThreadVi
     router.push(`/?q=${encodeURIComponent(cleanTag)}`);
   };
 
-  // Only used to refresh replies after posting — not for initial load
   const loadData = async () => {
-    setLoading(true);
     const data = await getThread(threadId);
     setThread(data);
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadData();
+  }, [threadId]);
 
   const handleMainReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();

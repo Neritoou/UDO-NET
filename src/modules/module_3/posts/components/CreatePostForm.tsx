@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPostAction, CommunityOption } from "@module_3/posts/actions/post";
+import { createPostAction, getUserJoinedCommunitiesAction, CommunityOption } from "@module_3/posts/actions/post";
 import { getLinkMetadata } from "@module_3/posts/actions/links";
 import PopoverSelect from '../../components/PopoverSelect';
 import UserAvatar from '../../components/UserAvatar';
@@ -16,7 +16,6 @@ interface LinkMetadata {
 interface CreatePostModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialCommunities?: CommunityOption[];
   initialCommunity?: string;
   userAvatar?: string;
   userName?: string;
@@ -25,20 +24,33 @@ interface CreatePostModalProps {
 export default function CreatePostModal({ 
   isOpen, 
   onClose, 
-  initialCommunities = [],
   initialCommunity = "General", 
   userAvatar,
   userName = "Estudiante UDO"
 }: CreatePostModalProps) {
   const [title, setTitle] = useState("");
   const [community, setCommunity] = useState(initialCommunity);
-  const [communitiesList] = useState<CommunityOption[]>(initialCommunities);
+  const [communitiesList, setCommunitiesList] = useState<CommunityOption[]>([]);
   const [postText, setPostText] = useState("");
   const [urlInput, setUrlInput] = useState("");
   const [tags, setTags] = useState("");
   const [metadata, setMetadata] = useState<LinkMetadata | null>(null);
   const [statusMessage, setStatusMessage] = useState<{ success: boolean; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Cargar comunidades que el usuario sigue al abrir el modal
+  useEffect(() => {
+    if (isOpen) {
+      getUserJoinedCommunitiesAction().then((list) => {
+        setCommunitiesList(list);
+        if (list.length > 0 && !list.some(c => c.id === initialCommunity)) {
+          setCommunity(list[0].id);
+        } else {
+          setCommunity(initialCommunity);
+        }
+      });
+    }
+  }, [isOpen, initialCommunity]);
 
   // Debounce para previsualizar metadata de URL
   useEffect(() => {
@@ -74,6 +86,7 @@ export default function CreatePostModal({
       const data = (await getLinkMetadata(url)) as { success?: number; meta?: LinkMetadata };
       if (data.success === 1 && data.meta) setMetadata(data.meta);
     } catch (error) {
+      console.error("Error al obtener la vista previa:", error);
     } finally {
       setLoading(false);
     }
@@ -116,6 +129,7 @@ export default function CreatePostModal({
         setStatusMessage({ success: false, text: response.error || "Ocurrió un error." });
       }
     } catch (error) {
+      console.error(error);
       setStatusMessage({ success: false, text: "Error de red al conectar con el servidor." });
     }
   };

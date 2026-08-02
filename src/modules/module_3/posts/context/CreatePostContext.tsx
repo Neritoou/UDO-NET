@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import CreatePostModal from '@module_3/posts/components/CreatePostForm';
-import { CommunityOption } from '@module_3/posts/actions/post';
 
 interface OpenOptions {
   communityId?: string;
@@ -19,7 +18,7 @@ interface CreatePostContextType {
 
 const CreatePostContext = createContext<CreatePostContextType | undefined>(undefined);
 
-export function CreatePostProvider({ children, communities = [] }: { children: React.ReactNode; communities?: CommunityOption[] }) {
+export function CreatePostProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [communityId, setCommunityId] = useState<string | undefined>(undefined);
   const [avatar, setAvatar] = useState<string | undefined>(undefined);
@@ -40,7 +39,6 @@ export function CreatePostProvider({ children, communities = [] }: { children: R
       <CreatePostModal 
         isOpen={isOpen} 
         onClose={close} 
-        initialCommunities={communities}
         initialCommunity={communityId} 
         userAvatar={avatar} 
       />
