@@ -8,3 +8,10 @@ export {
   isUserSubscribed,
   getCommunityMemberCount,
 } from './services/community.service'
+
+export {
+  createSubcommunityAction,
+  uploadCommunityBannerAction,
+  uploadCommunityIconAction,
+  deleteSubcommunityAction,
+} from './actions/community.actions'

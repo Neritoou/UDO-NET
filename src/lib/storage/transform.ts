@@ -2,18 +2,29 @@
 const MAGIC_BYTES: Record<string, number[][]> = {
   'image/jpeg': [[0xFF, 0xD8, 0xFF]],
   'image/png': [[0x89, 0x50, 0x4E, 0x47]],
-  'image/webp': [[0x52, 0x49, 0x46, 0x46]],
   'image/gif': [[0x47, 0x49, 0x46, 0x38]],
 }
+
+/** Bytes "WEBP" que deben aparecer en offset 8 de un archivo WebP real. */
+const WEBP_MARKER = [0x57, 0x45, 0x42, 0x50]
+
+/** Bytes "RIFF" que inician un contenedor RIFF (WebP, WAV, AVI, etc.). */
+const RIFF_HEADER = [0x52, 0x49, 0x46, 0x46]
 
 const RESIZE_TIMEOUT = 5000
 
 /** Verifica que los primeros bytes del archivo coincidan con los formatos permitidos. */
 async function isRealImage(file: File, allowedTypes: readonly string[]): Promise<boolean> {
-  const buffer = await file.slice(0, 8).arrayBuffer()
+  const buffer = await file.slice(0, 12).arrayBuffer()
   const bytes = new Uint8Array(buffer)
 
   return allowedTypes.some((type) => {
+    if (type === 'image/webp') {
+      const hasRiff = RIFF_HEADER.every((byte, i) => bytes[i] === byte)
+      const hasWebp = WEBP_MARKER.every((byte, i) => bytes[i + 8] === byte)
+      return hasRiff && hasWebp
+    }
+
     const signatures = MAGIC_BYTES[type]
     if (!signatures) return false
     return signatures.some((sig) =>
@@ -23,10 +34,7 @@ async function isRealImage(file: File, allowedTypes: readonly string[]): Promise
 }
 
 /** Valida tipo MIME, tamaño y magic bytes de una imagen. */
-export async function validateImage(
-  file: File,
-  config: { maxSize: number; allowedTypes: readonly string[] }
-): Promise<string | null> {
+export async function validateImage(file: File, config: { maxSize: number; allowedTypes: readonly string[] }): Promise<string | null> {
   if (!config.allowedTypes.includes(file.type)) {
     return 'Tipo de archivo no permitido.'
   }
@@ -44,10 +52,7 @@ export async function validateImage(
 }
 
 /** Redimensiona una imagen con crop centrado y la convierte a WebP. */
-export async function resizeImage(
-  file: File,
-  dimensions: { width: number; height: number }
-): Promise<Blob> {
+export async function resizeImage(file: File, dimensions: { width: number; height: number }): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new Image()
 
