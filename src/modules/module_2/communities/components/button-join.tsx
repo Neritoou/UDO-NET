@@ -44,8 +44,8 @@ export default function JoinCommunityComponent({ communityId }: { communityId:st
                 disabled={isPending}
                 className={`px-4 py-1.5 rounded-full text-sm font-semibold transition flex items-center gap-2 ${
                     isPending
-                    ? "bg-blue-800 text-blue-200 cursor-wait"
-                    : "bg-blue-600 hover:bg-blue-700 text-white active:scale-95"
+                    ? "bg-main-blue/50 text-pure-white cursor-wait"
+                    : "bg-regular-blue hover:bg-dark-main-blue text-pure-white active:scale-95"
                 }`}>
                 {isPending ? (
                 <>
@@ -65,8 +65,8 @@ export default function JoinCommunityComponent({ communityId }: { communityId:st
                 <div
                     className={`flex items-start justify-between gap-3 p-4 rounded-xl shadow-lg border ${
                     alert.type === 'error'
-                    ? "bg-red-950/90 border-red-800 text-red-300"
-                    : "bg-emerald-950/90 border-emerald-800 text-emerald-300"
+                    ? "bg-red-50 border-red-200 text-red-700"
+                    : "bg-emerald-50 border-emerald-200 text-emerald-700"
                     }`}>
                     <div className="flex items-start gap-2.5">
                         {alert.type === 'error' ? (
@@ -85,8 +85,8 @@ export default function JoinCommunityComponent({ communityId }: { communityId:st
                     onClick={() => setAlert(null)}
                     className={`p-1 rounded-lg transition-colors ${
                         alert.type === 'error'
-                        ? "text-red-400 hover:bg-red-900 hover:text-red-200"
-                        : "text-emerald-400 hover:bg-emerald-900 hover:text-emerald-200"
+                        ? "text-red-500 hover:bg-red-100"
+                        : "text-emerald-600 hover:bg-emerald-100"
                     }`}>
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

@@ -16,7 +16,7 @@ interface IEDITFORM {
     isOpen: boolean;
     setIsOpen: Dispatch<SetStateAction<boolean>>;
     community: Community;
-    subcomminity: Community;
+    subcommunity: Community;
 };
 
 interface IERRDATA{
@@ -42,14 +42,14 @@ const fileToBase64 = (file: File): Promise<string> => {
     });
 };
 
-export default function ModalEditSubCommunity({ community, subcomminity, isOpen, setIsOpen }: IEDITFORM ){
+export default function ModalEditSubCommunity({ community, subcommunity, isOpen, setIsOpen }: IEDITFORM ){
     const [msgErr, setMsgErr] = useState<IERRDATA>(ERR_DATA_FORM);
     const [msgErrSrv, setMsgErrSrv] = useState<string>("");
     
-    const [name, setName] = useState<string>(subcomminity.name);
-    const [descripcion, setDescription] = useState<string>(subcomminity.description)
-    const [bannerPreview, setBannerPreview] = useState<string | null>(subcomminity.banner_url);
-    const [photoPreview, setPhotoPreview] = useState<string | null>(subcomminity.icon_url);
+    const [name, setName] = useState<string>(subcommunity.name);
+    const [descripcion, setDescription] = useState<string>(subcommunity.description)
+    const [bannerPreview, setBannerPreview] = useState<string | null>(subcommunity.banner_url);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(subcommunity.icon_url);
 
     const [fileBanner, setFileBanner] = useState<File | undefined>(undefined);
     const [filePhoto, setFilePhoto] = useState<File | undefined>(undefined);
@@ -66,7 +66,7 @@ export default function ModalEditSubCommunity({ community, subcomminity, isOpen,
 
         startTransition(async () => {
             try {
-                const result = await updateSubcommunityAction(subcomminity.id, name, descripcion);
+                const result = await updateSubcommunityAction(subcommunity.id, name, descripcion);
 
                 if(name.length < MIN_NAME_LENGTH || descripcion.length < MIN_DESCRIPTION_LENGTH) return;
 
@@ -78,7 +78,7 @@ export default function ModalEditSubCommunity({ community, subcomminity, isOpen,
                 if (filePhoto) {
                     try {
                         const base64Icon = await fileToBase64(filePhoto);
-                        const iconResult = await uploadCommunityIconAction(subcomminity.id, base64Icon);
+                        const iconResult = await uploadCommunityIconAction(subcommunity.id, base64Icon);
 
                         if (iconResult.error) {
                             setMsgErrSrv(`Se actualizó la información, pero hubo un error al cargar el icono: ${iconResult.error}`);
@@ -93,7 +93,7 @@ export default function ModalEditSubCommunity({ community, subcomminity, isOpen,
                 if (fileBanner) {
                     try {
                         const base64Banner = await fileToBase64(fileBanner);
-                        const bannerResult = await uploadCommunityBannerAction(subcomminity.id, base64Banner);
+                        const bannerResult = await uploadCommunityBannerAction(subcommunity.id, base64Banner);
 
                         if (bannerResult.error) {
                             setMsgErrSrv(`Se actualizó la información, pero hubo un error al cargar el banner: ${bannerResult.error}`);
@@ -300,11 +300,11 @@ export default function ModalEditSubCommunity({ community, subcomminity, isOpen,
             <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 font-sans">
                 <div className="flex justify-between items-center px-8 pt-6 pb-2">
                     <h2 className="text-xl font-bold text-gray-900 mx-auto pl-6">
-                        Modificando {subcomminity.name} dentro de {community.name}
+                        Modificando {subcommunity.name} dentro de {community.name}
                     </h2>
                     <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100" onClick={() => { 
-                        setIsOpen(false); setMsgErr(ERR_DATA_FORM); setMsgErrSrv(""); setBannerPreview(subcomminity.banner_url); setPhotoPreview(subcomminity.icon_url);
-                        setName(subcomminity.name); setDescription(subcomminity.description); }}>
+                        setIsOpen(false); setMsgErr(ERR_DATA_FORM); setMsgErrSrv(""); setBannerPreview(subcommunity.banner_url); setPhotoPreview(subcommunity.icon_url);
+                        setName(subcommunity.name); setDescription(subcommunity.description); }}>
                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>

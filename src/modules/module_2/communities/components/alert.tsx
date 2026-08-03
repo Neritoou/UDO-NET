@@ -1,6 +1,6 @@
 export function ErrAlert({ msg }:{ msg: string}){
     return(
-        <div role="alert pt-2">
+        <div role="alert" className="pt-2">
             <div className="border border-red-400 rounded-md bg-red-100 px-4 py-3 text-red-700">
                 <p>{msg}</p>
             </div>

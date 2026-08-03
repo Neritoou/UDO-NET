@@ -19,10 +19,10 @@ export function CardCommunities({ item, basePath = "/communities" }: { item: Com
             href={`${basePath}/${item.slug}`}
             className="group relative flex w-full flex-col overflow-hidden transition-all duration-200 hover:-translate-y-3"
             >
-            <div className="relative w-full overflow-hidden rounded-2xl bg-gray-900 mt-3">
+            <div className="relative w-full overflow-hidden rounded-2xl bg-pure-white border border-white-gray shadow-sm mt-3">
                 {item.banner_url != null 
                 ? 
-                    <div className="relative h-20 w-full bg-gray-800">
+                    <div className="relative h-20 w-full bg-lite-white">
                         <Image
                             src={item.banner_url}
                             alt="Communitys Banner"
@@ -51,18 +51,18 @@ export function CardCommunities({ item, basePath = "/communities" }: { item: Com
                                 alt="Users Photo"
                                 width={64}
                                 height={64}
-                                className="h-16 w-16 rounded-full border-4 object-cover border-gray-900" />
+                                className="h-16 w-16 rounded-full border-4 object-cover border-pure-white" />
                         :
-                            <div className="flex h-14 w-14 items-center justify-center rounded-full border-4 text-lg font-bold text-white sm:h-16 sm:w-16 sm:text-xl border-gray-900 bg-slate-700">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-full border-4 text-lg font-bold text-white sm:h-16 sm:w-16 sm:text-xl border-pure-white bg-main-blue">
                                 {item.name.charAt(0).toUpperCase()}
                             </div>
                         }
                         {item.parent_id != null && (
                             <div className="flex flex-col text-xs pt-6">
-                                <span className="font-semibold text-white">
+                                <span className="font-semibold text-main-black">
                                     Creado por un miembro
                                 </span>
-                                <span className="text-gray-400">
+                                <span className="text-gray-custom">
                                     {formatDate(item.created_at)}
                                 </span>
                             </div>
@@ -71,10 +71,10 @@ export function CardCommunities({ item, basePath = "/communities" }: { item: Com
                 </div>
 
                 <div className="p-5 pt-10 mt-3">
-                    <h3 className="text-xl font-bold text-white">
+                    <h3 className="text-xl font-bold text-main-black">
                         {item.name}
                     </h3>
-                    <p className="mt-2 text-sm line-clamp-3 text-gray-300">
+                    <p className="mt-2 text-sm line-clamp-3 text-gray-custom">
                         {item.description}
                     </p>
                 </div>

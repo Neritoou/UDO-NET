@@ -14,7 +14,7 @@ export default function AddSubCommunity({ parentId, parentSlug, parentName }: IA
 
     return(
         <>
-            <button onClick={() => setIsOpen(true)} className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+            <button onClick={() => setIsOpen(true)} className="bg-regular-blue text-pure-white px-4 py-2 rounded-full hover:bg-dark-main-blue transition">
                 Crear Subcomunidad
             </button>
 

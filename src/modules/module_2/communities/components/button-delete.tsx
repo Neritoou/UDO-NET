@@ -9,8 +9,7 @@ export default function DeleteSubcommunity({ community, subcommunity }:{ communi
 
     return(
         <>
-            <button onClick={() => setIsOpen(true)} className={`px-3 py-1.5 rounded-full text-sm font-semibold transition flex items-center 
-            gap-2 border border-gray-700 text-gray-300 hover:bg-gray-800 active:scale-95`}>
+            <button onClick={() => setIsOpen(true)} className="px-3 py-1.5 rounded-full text-sm font-semibold transition flex items-center gap-2 border border-red-200 text-red-600 hover:bg-red-50 active:scale-95">
                 Eliminar
             </button>
 

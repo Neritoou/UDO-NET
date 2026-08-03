@@ -1,9 +1,7 @@
 'use server'
 
-// Reemplazar mocks con imports reales cuando el Módulo 1 esté listo
-// import { getCurrentUser } from '@module_1/auth/exports'
-// import { getUserReputation } from '@module_1/profiles/exports'
-
+import { getCurrentUser } from '@module_1/auth/exports'
+import { getUserReputation } from '@module_1/profiles/exports'
 import { revalidatePath } from 'next/cache'
 import type { Community, UserRole } from '@/lib/types'
 import { generateSlug } from '@/lib/utils/generateSlug'
@@ -50,18 +48,6 @@ async function revalidateCommunityPath(community: Community): Promise<void> {
   }
 }
 
-// (!) --- Usuario mock ---
-const MOCK_USER = {
-  id: '00000000-0000-0000-0000-000000000001',
-  email: 'test@test.com',
-  username: 'testuser',
-  avatar_url: null,
-  bio: null,
-  is_public: true,
-  role: 'regular' as UserRole,
-  reputation: 150,
-  created_at: new Date().toISOString(),
-}
 
 /** Verifica si el usuario puede gestionar una comunidad (creador, moderador o admin). */
 function canManageCommunity(community: Community, userId: string, role: UserRole): boolean {
@@ -71,7 +57,7 @@ function canManageCommunity(community: Community, userId: string, role: UserRole
 // --- SUBCOMUNIDADES ---
 
 export async function createSubcommunityAction(name: string, description: string, parentId: string): Promise<ActionResult<Community>> {
-  const user = MOCK_USER
+  const user = await getCurrentUser()
   if (!user) return { error: 'Debes iniciar sesión para crear una subcomunidad.' }
 
   const trimmedName = name.trim()
@@ -97,9 +83,7 @@ export async function createSubcommunityAction(name: string, description: string
     return { error: 'Debes pertenecer a esta comunidad para crear una subcomunidad.' }
   }
 
-  // Reemplazar con reputación real cuando el Módulo 1 esté listo
-  const reputation = user.reputation
-  if (reputation < MIN_REPUTATION_TO_CREATE) {
+  if (user.reputation < MIN_REPUTATION_TO_CREATE) {
     return { error: `Necesitas al menos ${MIN_REPUTATION_TO_CREATE} de reputación para crear una subcomunidad.` }
   }
 
@@ -127,7 +111,7 @@ export async function createSubcommunityAction(name: string, description: string
 }
 
 export async function updateSubcommunityAction(communityId: string, name: string, description: string): Promise<ActionResult<Community>> {
-  const user = MOCK_USER
+  const user = await getCurrentUser()
   if (!user) return { error: 'Debes iniciar sesión para editar una subcomunidad.' }
 
   const community = await getCommunityById(communityId)
@@ -173,7 +157,7 @@ export async function updateSubcommunityAction(communityId: string, name: string
 }
 
 export async function deleteSubcommunityAction(communityId: string): Promise<ActionResult<true>> {
-  const user = MOCK_USER
+  const user = await getCurrentUser()
   if (!user) return { error: 'Debes iniciar sesión para eliminar una subcomunidad.' }
 
   const community = await getCommunityById(communityId)
@@ -197,7 +181,7 @@ export async function deleteSubcommunityAction(communityId: string): Promise<Act
 // --- MEMBRESÍAS ---
 
 export async function joinCommunityAction(communityId: string): Promise<ActionResult<true>> {
-  const user = MOCK_USER
+  const user = await getCurrentUser()
   if (!user) return { error: 'Debes iniciar sesión para unirte a una comunidad.' }
 
   const community = await getCommunityById(communityId)
@@ -224,7 +208,7 @@ export async function joinCommunityAction(communityId: string): Promise<ActionRe
 }
 
 export async function leaveCommunityAction(communityId: string): Promise<ActionResult<true>> {
-  const user = MOCK_USER
+  const user = await getCurrentUser()
   if (!user) return { error: 'Debes iniciar sesión para salir de una comunidad.' }
 
   const subscribed = await isUserSubscribed(user.id, communityId)
@@ -250,7 +234,7 @@ export async function leaveCommunityAction(communityId: string): Promise<ActionR
 
 /** Sube o reemplaza el icono de una comunidad. */
 export async function uploadCommunityIconAction(communityId: string, base64: string): Promise<ActionResult<string>> {
-  const user = MOCK_USER
+  const user = await getCurrentUser()
   if (!user) return { error: 'Debes iniciar sesión.' }
 
   const community = await getCommunityById(communityId)
@@ -284,7 +268,7 @@ export async function uploadCommunityIconAction(communityId: string, base64: str
 
 /** Elimina el icono de una comunidad. */
 export async function deleteCommunityIconAction(communityId: string): Promise<ActionResult<true>> {
-  const user = MOCK_USER
+  const user = await getCurrentUser()
   if (!user) return { error: 'Debes iniciar sesión.' }
 
   const community = await getCommunityById(communityId)
@@ -303,7 +287,7 @@ export async function deleteCommunityIconAction(communityId: string): Promise<Ac
 
 /** Sube o reemplaza el banner de una comunidad. */
 export async function uploadCommunityBannerAction(communityId: string, base64: string): Promise<ActionResult<string>> {
-  const user = MOCK_USER
+  const user = await getCurrentUser()
   if (!user) return { error: 'Debes iniciar sesión.' }
 
   const community = await getCommunityById(communityId)
@@ -337,7 +321,7 @@ export async function uploadCommunityBannerAction(communityId: string, base64: s
 
 /** Elimina el banner de una comunidad. */
 export async function deleteCommunityBannerAction(communityId: string): Promise<ActionResult<true>> {
-  const user = MOCK_USER
+  const user = await getCurrentUser()
   if (!user) return { error: 'Debes iniciar sesión.' }
 
   const community = await getCommunityById(communityId)

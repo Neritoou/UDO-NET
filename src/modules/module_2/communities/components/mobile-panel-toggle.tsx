@@ -14,7 +14,7 @@ export default function MobilePanelToggle({ title, children }: MobilePanelToggle
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="lg:hidden fixed bottom-5 right-5 z-40 px-4 py-2.5 bg-green-600 hover:bg-green-700 active:scale-95 text-white text-sm font-semibold rounded-full shadow-lg transition-all"
+        className="lg:hidden fixed bottom-5 right-5 z-40 px-4 py-2.5 bg-regular-blue hover:bg-dark-main-blue active:scale-95 text-pure-white text-sm font-semibold rounded-full shadow-lg transition-all"
       >
         {title}
       </button>
@@ -22,15 +22,17 @@ export default function MobilePanelToggle({ title, children }: MobilePanelToggle
       <div className="hidden lg:block">{children}</div>
 
       {isOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md max-h-[85vh] overflow-y-auto bg-gray-950 rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-white font-semibold text-sm">{title}</h2>
-              <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white font-bold px-1">
+        <div className="lg:hidden fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md max-h-[85vh] bg-pure-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
+              <h2 className="text-main-black font-semibold text-sm">{title}</h2>
+              <button onClick={() => setIsOpen(false)} className="text-gray-custom hover:text-main-black font-bold px-1">
                 ✕
               </button>
             </div>
-            {children}
+            <div className="overflow-y-auto px-4 pb-4">
+              {children}
+            </div>
           </div>
         </div>
       )}

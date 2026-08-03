@@ -1,10 +1,10 @@
-// src/modules/module_2/communities/components/get-communities-svr.tsx
-import { getAllCommunities, getSubcommunities } from "@module_2/communities/services/community.service";
+import { getAllCommunities, getSubcommunities, isUserSubscribed } from "@module_2/communities/services/community.service";
 import { InstrustiveAlert } from "@module_2/communities/components/alert";
 import { Community } from "@/lib/types";
 import { CardCommunities } from "@/modules/module_2/communities/components/card-communities";
 import AddSubCommunity from "@module_2/communities/components/button-add";
 import MobilePanelToggle from "@module_2/communities/components/mobile-panel-toggle";
+import { getCurrentUserId } from "@module_1/auth/exports";
 
 export async function GetCommunitiesSC(){
     const communities:Community[] = await getAllCommunities();
@@ -30,10 +30,19 @@ interface IGETSUBCOMMUNITIES {
 }
 
 export async function GetSubcommunitiesSC({ parentId, parentSlug, parentName }: IGETSUBCOMMUNITIES){
-    const subCommunities:Community[] = await getSubcommunities(parentId);
+    const currentUserId = await getCurrentUserId();
+
+    const [subCommunities, canCreateSubcommunity] = await Promise.all([
+        getSubcommunities(parentId),
+        currentUserId ? isUserSubscribed(currentUserId, parentId) : Promise.resolve(false),
+    ]);
+
     return(
         <MobilePanelToggle title="Subcomunidades">
-            <div className="space-y-3">
+            <div className="bg-pure-white rounded-[24px] p-4 space-y-3">
+                <h2 className="font-candal font-normal text-tiny text-main-black px-1">
+                    Subcomunidades
+                </h2>
                 {subCommunities.length == 0 ? (
                     <InstrustiveAlert msg="No se ha encontrado ninguna subcomunidad" />
                 ) : (
@@ -45,11 +54,13 @@ export async function GetSubcommunitiesSC({ parentId, parentSlug, parentName }: 
                         />
                     ))
                 )}
-                <AddSubCommunity
-                    parentId={parentId}
-                    parentSlug={parentSlug}
-                    parentName={parentName}
-                />
+                {canCreateSubcommunity && (
+                    <AddSubCommunity
+                        parentId={parentId}
+                        parentSlug={parentSlug}
+                        parentName={parentName}
+                    />
+                )}
             </div>
         </MobilePanelToggle>
     );
