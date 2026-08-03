@@ -1,5 +1,5 @@
 export type TargetType = 'post' | 'reply' | 'user' | 'community'
-export type ReportStatus = 'pendiente' | 'aprobado' | 'rechazado'
+export type ReportStatus = 'pending' | 'approved' | 'rejected'
 
 export type Report = {
   id: string

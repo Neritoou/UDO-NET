@@ -3,18 +3,14 @@ import type { CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 /**
- * Crea y retorna un cliente de Supabase configurado para el lado del servidor (Server Components y Server Actions).
- *
- * Utiliza la API de cookies de Next.js para leer y escribir las cookies de sesión de Supabase.
- * El bloque `setAll` se encierra en un try/catch porque en los Server Components de solo lectura
- * intentar escribir cookies lanza un error que debe ignorarse silenciosamente.
+ * Crea y retorna un cliente de Supabase configurado para el lado del servidor.
  */
 export async function createClient() {
   const cookieStore = await cookies()
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
         getAll() {
@@ -26,7 +22,7 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             )
           } catch {
-            // Se ignoran los errores en Server Components de solo lectura donde no se pueden escribir cookies.
+            // Ignorar errores en Server Components (read-only)
           }
         },
       },

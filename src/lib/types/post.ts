@@ -1,4 +1,4 @@
-export type PostStatus = 'abierto' | 'cerrado'
+export type PostStatus = 'open' | 'closed'
 
 export type Post = {
   id: string
@@ -22,4 +22,14 @@ export type Tag = {
 export type PostTag = {
   post_id: string
   tag_id: string
+}
+
+export type PostLink = {
+  id: string
+  post_id: string
+  url: string
+  title: string | null
+  description: string | null
+  image_url: string | null
+  created_at: string
 }
