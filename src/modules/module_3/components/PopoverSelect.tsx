@@ -72,24 +72,25 @@ export default function PopoverSelect({
   const headerTitle = titleHeader || label || "Opciones";
 
   const defaultButtonClass =
-    "bg-lite-white hover:bg-white-gray text-main-black font-candal font-normal text-extra-tiny px-3.5 py-1 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer border-0";
+    "bg-lite-white hover:bg-white-gray text-main-black font-candal font-normal text-extra-tiny px-3.5 py-1 rounded-full flex items-center gap-1.5 transition-colors cursor-pointer border-0 max-w-[200px] sm:max-w-[240px] min-w-0";
 
   // Si tiene label fijo (ej: "Temas:", "Popular:"), muestra solo el label. Si no, muestra el valor seleccionado.
   const displayLabel = label || selectedOptionName;
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block max-w-full">
       {/* Botón Desplegable */}
       <button
         type="button"
         onClick={togglePopover}
         className={buttonClassName || defaultButtonClass}
+        title={displayLabel}
       >
-        <span>{displayLabel}</span>
+        <span className="truncate inline-block min-w-0 flex-1 text-left">{displayLabel}</span>
         {isOpen ? (
-          <ChevronUpIcon className="w-[9px] h-[5px] text-main-black" />
+          <ChevronUpIcon className="w-[9px] h-[5px] text-main-black shrink-0" />
         ) : (
-          <ChevronDownIcon className="w-[9px] h-[5px] text-main-black" />
+          <ChevronDownIcon className="w-[9px] h-[5px] text-main-black shrink-0" />
         )}
       </button>
 
@@ -108,7 +109,7 @@ export default function PopoverSelect({
               onClick={closePopover}
               className="text-extra-tiny text-main-black cursor-pointer font-candal font-normal pl-2 border-0 bg-transparent"
             >
-              <ChevronUpIcon className="w-[9px] h-[5px] text-main-black" />
+              <ChevronUpIcon className="w-[9px] h-[5px] text-main-black shrink-0" />
             </button>
           </div>
 
@@ -123,11 +124,12 @@ export default function PopoverSelect({
                 <button
                   key={option.id}
                   type="button"
+                  title={option.name}
                   onClick={() => {
                     onSelect(option.id);
                     closePopover();
                   }}
-                  className={`w-full font-candal font-normal text-tiny py-1.5 px-3 rounded-full text-center transition-all cursor-pointer block border-0 ${
+                  className={`w-full font-candal font-normal text-tiny py-1.5 px-3 rounded-full text-center transition-all cursor-pointer block border-0 truncate ${
                     selectedValue === option.id
                       ? 'bg-regular-blue text-pure-white'
                       : 'bg-white-gray hover:bg-gray-blue text-main-black'
