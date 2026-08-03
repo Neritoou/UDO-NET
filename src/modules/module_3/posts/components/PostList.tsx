@@ -4,15 +4,17 @@ import { useState, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { addReplyAction } from '@module_3/posts/actions/reply';
 import { UnifiedPost } from '@module_3/posts/services/supabase-service';
-import VoteManager from '@module_4/votes/components/VoteManager';
 import UserBadge from '@module_4/reputation/components/UserBadge';
 import UserAvatar from '../../components/UserAvatar';
 import Toast from '../../components/Toast';
 import {
   PaperPlaneIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  CommentIcon
 } from '../../components/icons';
 import { formatDate } from '@/lib/utils/formatDate';
+import { ReportModal } from '@/modules/module_5/reports/components/ReportModal';
+import { createReportAction } from '@/modules/module_5/reports/actions/create-report.action';
 
 export interface PostCardProps {
   post: UnifiedPost;
@@ -39,6 +41,8 @@ export function PostCard({
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [showAllTags, setShowAllTags] = useState(false);
   const [quickReply, setQuickReply] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const authorName = post.author?.username || 'Anónimo';
   const authorCareer = post.author?.bio || 'Carrera';
@@ -94,10 +98,10 @@ export function PostCard({
       )}
 
       {/* Cabecera del post */}
-      <div className="-mx-6 px-6 pt-1 pb-4 mb-4 border-b border-white-gray flex items-center justify-between gap-4">
+      <div className="-mx-6 px-6 pt-1 pb-4 mb-4 border-b border-white-gray flex items-center justify-between gap-4 min-w-0">
         <h2
           onClick={() => onSelectPost && onSelectPost(post.id)}
-          className="font-candal font-normal text-h4 text-main-black hover:text-main-blue transition-colors cursor-pointer leading-tight flex-1"
+          className="font-candal font-normal text-h4 text-main-black hover:text-main-blue transition-colors cursor-pointer leading-tight flex-1 min-w-0 break-words [overflow-wrap:anywhere]"
         >
           {post.title}
         </h2>
@@ -120,28 +124,50 @@ export function PostCard({
           <span className="font-candal font-normal text-tiny text-alpha-black">
             {communityBreadcrumb}
           </span>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setToast({ message: 'Opciones de publicación', type: 'info' });
-            }}
-            className="font-candal font-normal text-p text-alpha-black hover:text-main-black cursor-pointer bg-transparent border-0 px-1"
-          >
-            •••
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMenuOpen(!isMenuOpen);
+              }}
+              className="font-candal font-normal text-p text-alpha-black hover:text-main-black cursor-pointer bg-transparent border-0 px-1"
+              aria-label="Opciones"
+            >
+              •••
+            </button>
+
+            {isMenuOpen && (
+              <div
+                className="absolute right-0 top-full mt-1 w-44 bg-pure-white border border-white-gray rounded-[16px] shadow-lg z-50 overflow-hidden font-candal font-normal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsReportModalOpen(true);
+                  }}
+                  className="w-full text-left px-4 py-2.5 text-tiny text-deep-orange hover:bg-lite-white transition-colors cursor-pointer border-0 bg-transparent flex items-center gap-2"
+                >
+                  <span>🚩</span>
+                  <span>Reportar</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Fila del autor */}
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <div className="flex items-start gap-4">
+      <div className="flex items-center justify-between gap-4 mb-4 min-w-0">
+        <div className="flex items-start gap-4 min-w-0">
           <div className="mt-[3px] shrink-0">
             <UserAvatar avatarUrl={post.author?.avatar_url} username={authorName} size="w-[50px] h-[50px]" />
           </div>
 
-          <div className="flex flex-col space-y-[7px]">
-            <h4 className="font-candal font-normal text-h4 text-main-black leading-tight m-0 p-0">
+          <div className="flex flex-col space-y-[7px] min-w-0">
+            <h4 className="font-candal font-normal text-h4 text-main-black leading-tight m-0 p-0 break-words min-w-0">
               {authorName}
             </h4>
 
@@ -154,7 +180,7 @@ export function PostCard({
               </div>
             )}
 
-            <h5 className="font-candal font-normal text-h5 text-alpha-black leading-tight m-0 p-0">
+            <h5 className="font-candal font-normal text-h5 text-alpha-black leading-tight m-0 p-0 break-words min-w-0">
               {authorCareer}
             </h5>
           </div>
@@ -221,7 +247,7 @@ export function PostCard({
 
       {/* Contenido */}
       {post.content && (
-        <p className={`font-candal font-normal text-p text-lite-black leading-relaxed mb-4 ${isThreadView ? 'whitespace-pre-wrap' : 'line-clamp-3'}`}>
+        <p className={`font-candal font-normal text-p text-lite-black leading-relaxed mb-4 break-words [overflow-wrap:anywhere] ${isThreadView ? 'whitespace-pre-wrap' : 'line-clamp-3'}`}>
           {post.content}
         </p>
       )}
@@ -290,15 +316,16 @@ export function PostCard({
       {/* Barra de acciones inferior */}
       <div className="flex items-center justify-between pt-1">
         <div className="flex items-center gap-3">
-          <div onClick={(e) => e.stopPropagation()}>
-            <VoteManager
-              replyId={post.id}
-              initialVoteCount={post.votes_count || 0}
-              currentSessionUserId={currentUserId || ''}
-              replyAuthorId={post.author_id || post.author?.id || ''}
-            />
+          {/* Contador de respuestas */}
+          <div 
+            className="px-3.5 py-1.5 rounded-full bg-lite-white border border-white-gray flex items-center gap-2 text-tiny font-candal font-normal text-main-black select-none"
+            title={`${post.replies_count ?? post.replies?.length ?? 0} ${(post.replies_count ?? post.replies?.length ?? 0) === 1 ? 'respuesta' : 'respuestas'}`}
+          >
+            <CommentIcon className="w-4 h-4 text-regular-blue shrink-0" />
+            <span>
+              {post.replies_count ?? post.replies?.length ?? 0} {(post.replies_count ?? post.replies?.length ?? 0) === 1 ? 'respuesta' : 'respuestas'}
+            </span>
           </div>
-
           {!isThreadView && post.status !== 'closed' && (
             <form
               onSubmit={handleQuickReplySubmit}
@@ -343,6 +370,22 @@ export function PostCard({
           </button>
         )}
       </div>
+
+      {/* Modal de Reporte del Módulo 5 */}
+      <ReportModal
+        isOpen={isReportModalOpen}
+        targetId={post.id}
+        targetType="post"
+        onClose={() => setIsReportModalOpen(false)}
+        onSubmitReport={async (reason, targetId) => {
+          const res = await createReportAction(targetId, 'post', reason);
+          if (res.success) {
+            setToast({ message: res.message || 'Reporte enviado a moderación.', type: 'success' });
+          } else {
+            setToast({ message: res.error || 'Error al enviar el reporte.', type: 'error' });
+          }
+        }}
+      />
 
     </article>
   );
