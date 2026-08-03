@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/db/server';
 import { revalidatePath } from 'next/cache';
+import { getCurrentUserId } from '@module_1/auth/exports'
 
 /**
  * Server Action: Marca una o varias notificaciones como leídas para el usuario actual.
@@ -18,9 +19,8 @@ import { revalidatePath } from 'next/cache';
  */
 export async function markNotificationsAsRead(notificationIds?: string[]) {
   try {
-    // ID de usuario mock temporal mientras se completa la integración con autenticación real.
-    const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
-    const currentUserId = MOCK_USER_ID;
+    const currentUserId = await getCurrentUserId();
+    if (!currentUserId) return { success: false, error: 'Debes iniciar sesión.' };
 
     const supabase = await createClient();
 

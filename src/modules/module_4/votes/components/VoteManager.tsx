@@ -85,8 +85,8 @@ export default function VoteManager({
         showToast(response.error || 'Error al registrar el voto.', 'error');
         return;
       }
-
-      showToast(response.message || 'Voto registrado correctamente.', 'success');
+      
+      showToast('Voto registrado correctamente.', 'success');
     } catch {
       setVoteCount(previousVoteCount);
       setCurrentVote(previousVote);

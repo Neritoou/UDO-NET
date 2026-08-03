@@ -30,7 +30,7 @@ export async function calculateWeight(userId: string): Promise<number> {
     }
 
     return 1.0;
-  } catch (error) {
+  } catch {
     return 1.0;
   }
 }

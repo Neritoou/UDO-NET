@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/db/server';
-import type { NotificationType } from '@/lib/types/notification';
+import type { NotificationType, Notification} from '@/lib/types/notification';
 
 /**
  * Crea una notificación para un usuario destinatario, respetando sus preferencias guardadas.
@@ -59,4 +59,37 @@ export async function createNotification(
     // Se retorna null para que los componentes que llamen a esta función puedan continuar sin fallar.
     return null;
   }
+}
+
+/**
+ * Obtiene las notificaciones de un usuario, ordenadas por fecha descendente.
+ */
+export async function getUserNotifications(userId: string, limit: number = 20): Promise<Notification[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error || !data) return []
+  return data
+}
+
+/**
+ * Obtiene la cantidad de notificaciones no leídas de un usuario.
+ */
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
+  const supabase = await createClient()
+
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('is_read', false)
+
+  if (error) return 0
+  return count ?? 0
 }

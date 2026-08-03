@@ -1,5 +1,9 @@
-// Expone el servicio de creación de notificaciones para uso de otros módulos (ej. Módulo 3 y Módulo 5).
-export { createNotification } from './services/notification.service';
+// --- Services ---
+export { createNotification, getUserNotifications, getUnreadNotificationCount } from './services/notification.service'
 
-// Expone la Server Action de marcar como leídas para uso de los componentes consumidores.
-export { markNotificationsAsRead } from './actions/notifications.actions';
+// --- Server Actions ---
+export { markNotificationsAsRead } from './actions/notifications.actions'
+
+// --- Componentes ---
+export { default as NotificationDropdown } from './components/NotificationDropdown'
+export { default as NotificationItem } from './components/NotificationItem'

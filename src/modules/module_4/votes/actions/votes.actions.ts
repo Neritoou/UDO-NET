@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/db/server';
 import { calculateWeight } from '@/modules/module_4/votes/services/weight.service';
 import { createNotification } from '@/modules/module_4/notifications/services/notification.service';
+import { getCurrentUserId } from '@module_1/auth/exports';
 import { revalidatePath } from 'next/cache';
 
 /**
@@ -14,12 +15,9 @@ export async function castVote(replyId: string, value: 1 | -1) {
       return { success: false, error: 'Parámetros inválidos. Se requiere replyId y value (1 | -1).' };
     }
 
-    // TODO: Reemplazar con getCurrentUser() cuando el Módulo 1 esté integrado.
-    const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
-    const currentUserId = MOCK_USER_ID;
-
+    const currentUserId = await getCurrentUserId();
     if (!currentUserId) {
-      return { success: false, error: 'No se proporcionó el ID del usuario.' };
+      return { success: false, error: 'Debes iniciar sesión para votar.' };
     }
 
     const supabase = await createClient();
