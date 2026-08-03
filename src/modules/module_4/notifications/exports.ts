@@ -1,2 +1,9 @@
-// Funciones expuestas para otros módulos
-// export { getUnreadCount, createNotification } from './services/notification.service'
+// --- Services ---
+export { createNotification, getUserNotifications, getUnreadNotificationCount } from './services/notification.service'
+
+// --- Server Actions ---
+export { markNotificationsAsRead } from './actions/notifications.actions'
+
+// --- Componentes ---
+export { default as NotificationDropdown } from './components/NotificationDropdown'
+export { default as NotificationItem } from './components/NotificationItem'

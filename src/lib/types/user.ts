@@ -9,5 +9,6 @@ export type User = {
   is_public: boolean
   role: UserRole
   reputation: number
+  notification_preferences: Record<string, boolean> | null
   created_at: string
 }

@@ -13,7 +13,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body className="font-candal text-main-black bg-lite-white">
+        {children}
+      </body>
     </html>
   )
 }

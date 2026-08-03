@@ -1,4 +1,4 @@
-export type NotificationType = 'reply' | 'vote' | 'warning' | 'report'
+export type NotificationType = 'reply' | 'vote' | 'warning' | 'report' | 'mention'
 
 export type Notification = {
   id: string
