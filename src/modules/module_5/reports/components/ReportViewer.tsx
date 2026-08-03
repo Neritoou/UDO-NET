@@ -1,17 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-
-export type Report = {
-  id: string;
-  reporter_id: string;
-  target_type: string;
-  target_id: string;
-  reason: string;
-  description: string | null;
-  status: string;
-  created_at: string;
-};
+import type { Report } from '@/lib/types/report'
 
 interface Props {
   report: Report;
@@ -27,8 +17,7 @@ export function ReportViewer({ report, onClose, onAction }: Props) {
       setLoading(true);
       await onAction(action, report.target_id, report.target_type);
       onClose();
-    } catch (err) {
-      console.error(err);
+    } catch {
     } finally {
       setLoading(false);
     }

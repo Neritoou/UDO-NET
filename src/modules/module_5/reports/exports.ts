@@ -1,2 +1,2 @@
-export { ReportPriorityService } from "./services/report-priority.service";
-export { ReportActionsService } from "./services/report-actions.service";
+export { calculateReportScore, getPrioritizedReports } from "./services/report-priority.service";
+export { getActiveReportsCount, updateContentVisibility, updateReportsStatus } from "./services/report-actions.service";
