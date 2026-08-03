@@ -6,7 +6,6 @@ export async function getThread(id: string): Promise<UnifiedPost | null> {
     try {
         return await getThreadService(id);
     } catch (error) {
-        console.error("Error al obtener el hilo:", error);
         return null;
     }
 }

@@ -6,7 +6,6 @@ export async function searchPosts(term: string = '', community?: string, tags?: 
     try {
         return await search(term, community, tags, filter);
     } catch (error) {
-        console.error("Error al realizar la búsqueda:", error);
         return [];
     }
 }

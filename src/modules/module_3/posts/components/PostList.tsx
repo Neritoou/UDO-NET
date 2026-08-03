@@ -21,6 +21,7 @@ export interface PostCardProps {
   onMainReplyClick?: () => void;
   showMainReplyBox?: boolean;
   onTagClick?: (tag: string) => void;
+  currentUserId?: string | null;
 }
 
 export function PostCard({
@@ -29,7 +30,8 @@ export function PostCard({
   isThreadView = false,
   onMainReplyClick,
   showMainReplyBox = false,
-  onTagClick
+  onTagClick,
+  currentUserId
 }: PostCardProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -292,7 +294,7 @@ export function PostCard({
             <VoteManager
               replyId={post.id}
               initialVoteCount={post.votes_count || 0}
-              currentSessionUserId="00000000-0000-0000-0000-000000000001"
+              currentSessionUserId={currentUserId || ''}
               replyAuthorId={post.author_id || post.author?.id || ''}
             />
           </div>
@@ -349,9 +351,10 @@ export function PostCard({
 export interface PostListProps {
   posts: UnifiedPost[];
   onSelectPost?: (id: string) => void;
+  currentUserId?: string | null;
 }
 
-export default function PostList({ posts, onSelectPost }: PostListProps) {
+export default function PostList({ posts, onSelectPost, currentUserId }: PostListProps) {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
 
@@ -381,7 +384,7 @@ export default function PostList({ posts, onSelectPost }: PostListProps) {
 
       <div className="space-y-6">
         {posts.map((post) => (
-          <PostCard key={post.id} post={post} onSelectPost={onSelectPost} />
+          <PostCard key={post.id} post={post} onSelectPost={onSelectPost} currentUserId={currentUserId} />
         ))}
       </div>
     </div>

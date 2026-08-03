@@ -256,7 +256,6 @@ export async function getLinkMetadata(inputUrl: string) {
 
     return await getGenericMetadata(url);
   } catch (error) {
-    console.error('Error en getLinkMetadata:', error);
     return {
       success: 0 as const,
       error:
