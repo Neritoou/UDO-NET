@@ -111,7 +111,8 @@ export async function castVote(replyId: string, value: 1 | -1) {
     revalidatePath('/', 'layout');
 
     return { success: true };
-  } catch {
+  } catch (error) {
+    console.error('Error in castVote:', error);
     return { success: false, error: 'Error interno del servidor.' };
   }
 }
