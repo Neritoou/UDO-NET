@@ -33,6 +33,11 @@ export default function CreatePostModal({
 }: CreatePostModalProps) {
   const [title, setTitle] = useState("");
   const [community, setCommunity] = useState(initialCommunity);
+
+  useEffect(() => {
+    if (initialCommunity) setCommunity(initialCommunity)
+  }, [initialCommunity])
+
   const [communitiesList, setCommunitiesList] = useState<CommunityOption[]>(initialCommunities);
   const [userName, setUserName] = useState(userNameProp || "Estudiante UDO");
   const [userAvatar, setUserAvatar] = useState<string | undefined>(userAvatarProp);
