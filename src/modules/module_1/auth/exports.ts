@@ -2,8 +2,10 @@
  * Barril del submódulo Auth (Módulo 1).
  *
  * Es el único punto de entrada permitido para el resto de módulos.
- * Los componentes de vista (LoginView, RegisterView, etc.) y los skeletons
- * se importan directamente desde sus archivos por las pages de src/app/.
+ * No importen nada desde `services/`, `actions/` ni `components/` directamente.
+ *
+ * (!) Este barril incluye servicios que solo corren en el servidor. Desde un
+ * archivo con 'use client' hay que importar de `./exports.client` en su lugar.
  */
 
 // --- Sesión ---
@@ -15,6 +17,8 @@ export {
 } from './services/session-service'
 
 // --- Recuperación de contraseña ---
+// `verifyRecoveryToken` la consume el Route Handler que atiende el enlace del
+// correo: es la única parte de Next.js que puede escribir la cookie de sesión.
 export { verifyRecoveryToken } from './services/auth-service'
 
 // --- Server Actions ---
@@ -26,8 +30,13 @@ export {
   updatePasswordAction,
 } from './actions/auth.actions'
 
-// --- Componentes reutilizables por otros módulos ---
+// --- Componentes ---
+export { LoginView } from './components/LoginView'
+export { RegisterView } from './components/RegisterView'
+export { ForgotPasswordView } from './components/ForgotPasswordView'
+export { UpdatePasswordView } from './components/UpdatePasswordView'
 export { LogoutButton } from './components/LogoutButton'
+export { AuthSkeleton } from './components/AuthSkeleton'
 
 // --- Roles ---
 export {
