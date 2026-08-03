@@ -2,13 +2,8 @@ import { Community } from "@/lib/types";
 import { formatDate } from "@/lib/utils/formatDate";
 import Link from "next/link";
 import Image from "next/image";
+import { gradients } from "@/lib/constants/communities";
 
-const gradients:string[] = [
-  'from-amber-500 via-rose-500 to-purple-600',
-  'from-emerald-500 via-teal-600 to-cyan-600',
-  'from-cyan-500 via-blue-600 to-indigo-600',
-  'from-fuchsia-500 via-purple-600 to-indigo-600',
-];
 
 export function CardCommunities({ item, basePath = "/communities" }: { item: Community; basePath?: string }){
     const gradientIndex:number = item.name.length % gradients.length;

@@ -73,47 +73,60 @@ export default async function SubcommunityPage({ params }: PageProps) {
                     )}
                     </div>
                                     
-                    <div className="absolute -bottom-10 left-4 sm:left-6 h-20 w-20 sm:h-24 sm:w-24 rounded-full border-4 border-gray-950 bg-gray-800 overflow-hidden">
-                        <Image
-                            src={subcommunity.icon_url ?? "/defaults/community_icon.svg"}
+                    <div className="relative px-5">
+                        <div className="absolute -top-7 flex items-center gap-3">
+                        {subcommunity.icon_url 
+                        ?
+                            <Image
+                            src={subcommunity.icon_url}
                             alt={subcommunity.name}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 640px) 80px, 96px"
-                        />
+                            width={80}
+                            height={80}
+                            className="object-cover rounded-full border-4 object-cover border-pure-white"
+                            />
+                        :
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 text-lg font-bold text-white sm:h-16 sm:w-16 sm:text-xl border-pure-white bg-main-blue">
+                            {subcommunity.name.charAt(0).toUpperCase()}
+                        </div>
+                        }
+                        </div>
                     </div>
                 </div>
 
 
-            <section className="mt-12 sm:mt-14 px-1 sm:px-2">
-            <span className="font-candal font-normal text-extra-small text-alpha-black">
-                Subcomunidad de {parent.name}
-            </span>
-            <h1 className="font-candal font-normal text-h4 sm:text-h3 text-main-black">
-                {subcommunity.name}
-            </h1>
-            <p className="mt-1 font-candal font-normal text-tiny text-gray-custom">
-                {subcommunity.description}
-            </p>
+            <section className="mt-12 sm:mt-14 px-1 sm:px-2 min-w-0 max-w-full">
+                <span className="font-candal font-normal text-extra-small text-alpha-black">
+                    Subcomunidad de {parent.name}
+                </span>
 
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-                {subscribed ? (
-                <LeaveCommunityComponent communityId={subcommunity.id} />
-                ) : (
-                <JoinCommunityComponent communityId={subcommunity.id} />
-                )}
+                <div className="flex flex-col gap-2">
+                    <h1 className="font-candal font-normal text-h4 sm:text-h3 text-main-black break-words leading-tight tracking-tight">
+                    {subcommunity.name}
+                    </h1>
+                    
+                    <p className="font-candal font-normal text-tiny text-gray-custom break-words w-full leading-relaxed">
+                    {subcommunity.description}
+                    </p>
+                </div>
 
-                <CreatePostButton communityId={subcommunity.id} disabled={!subscribed} />
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                    {subscribed ? (
+                    <LeaveCommunityComponent communityId={subcommunity.id} />
+                    ) : (
+                    <JoinCommunityComponent communityId={subcommunity.id} />
+                    )}
 
-                {canManage && (
-                <>
-                    <EditSubcommunity community={parent} subcommunity={subcommunity} />
-                    <DeleteSubcommunity community={parent} subcommunity={subcommunity} />
-                </>
-                )}
+                    <CreatePostButton communityId={subcommunity.id} disabled={!subscribed} />
 
-                <ShowMembers memberCount={memberCount} currentUsers={currentUsers} communityName={subcommunity.name} />
-            </div>
+                    {canManage && (
+                    <>
+                        <EditSubcommunity community={parent} subcommunity={subcommunity} />
+                        <DeleteSubcommunity community={parent} subcommunity={subcommunity} />
+                    </>
+                    )}
+
+                    <ShowMembers memberCount={memberCount} currentUsers={currentUsers} communityName={subcommunity.name} />
+                </div>
             </section>
 
             <div className="mt-8 grid grid-cols-12 gap-8">
@@ -124,7 +137,7 @@ export default async function SubcommunityPage({ params }: PageProps) {
 
             <aside className="lg:col-span-4">
                 <MobilePanelToggle title="Relacionado">
-                <div className="bg-pure-white rounded-[24px] p-4 space-y-3">
+                <div className="max-h-[710px] bg-pure-white rounded-[24px] p-4 space-y-3 overflow-y-auto">
                     <h2 className="font-candal font-normal text-tiny text-main-black px-1">
                     Subcomunidades relacionadas
                     </h2>

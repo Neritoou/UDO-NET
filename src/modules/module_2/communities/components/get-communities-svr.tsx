@@ -39,10 +39,19 @@ export async function GetSubcommunitiesSC({ parentId, parentSlug, parentName }: 
 
     return(
         <MobilePanelToggle title="Subcomunidades">
-            <div className="bg-pure-white rounded-[24px] p-4 space-y-3">
+            <div className="bg-pure-white max-h-[710px] rounded-[24px] p-4 space-y-3 overflow-y-auto">
                 <h2 className="font-candal font-normal text-tiny text-main-black px-1">
                     Subcomunidades
                 </h2>
+
+                {canCreateSubcommunity && (
+                    <AddSubCommunity
+                        parentId={parentId}
+                        parentSlug={parentSlug}
+                        parentName={parentName}
+                    />
+                )}
+
                 {subCommunities.length == 0 ? (
                     <InstrustiveAlert msg="No se ha encontrado ninguna subcomunidad" />
                 ) : (
@@ -53,13 +62,6 @@ export async function GetSubcommunitiesSC({ parentId, parentSlug, parentName }: 
                             basePath={`/communities/${parentSlug}`}
                         />
                     ))
-                )}
-                {canCreateSubcommunity && (
-                    <AddSubCommunity
-                        parentId={parentId}
-                        parentSlug={parentSlug}
-                        parentName={parentName}
-                    />
                 )}
             </div>
         </MobilePanelToggle>
