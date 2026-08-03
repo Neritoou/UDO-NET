@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPostAction, CommunityOption } from "@module_3/posts/actions/post";
+import { createPostAction, getUserJoinedCommunitiesAction, getCurrentUserDisplayAction, CommunityOption } from "@module_3/posts/actions/post";
 import { getLinkMetadata } from "@module_3/posts/actions/links";
 import PopoverSelect from '../../components/PopoverSelect';
 import UserAvatar from '../../components/UserAvatar';
@@ -27,18 +27,38 @@ export default function CreatePostModal({
   onClose, 
   initialCommunities = [],
   initialCommunity = "General", 
-  userAvatar,
-  userName = "Estudiante UDO"
+  userAvatar: userAvatarProp,
+  userName: userNameProp
 }: CreatePostModalProps) {
   const [title, setTitle] = useState("");
   const [community, setCommunity] = useState(initialCommunity);
-  const [communitiesList] = useState<CommunityOption[]>(initialCommunities);
+  const [communitiesList, setCommunitiesList] = useState<CommunityOption[]>(initialCommunities);
+  const [userName, setUserName] = useState(userNameProp || "Estudiante UDO");
+  const [userAvatar, setUserAvatar] = useState<string | undefined>(userAvatarProp);
   const [postText, setPostText] = useState("");
   const [urlInput, setUrlInput] = useState("");
   const [tags, setTags] = useState("");
   const [metadata, setMetadata] = useState<LinkMetadata | null>(null);
   const [statusMessage, setStatusMessage] = useState<{ success: boolean; text: string } | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Al abrir el modal, traer la lista real de comunidades del usuario y su nombre/avatar reales
+  useEffect(() => {
+    if (!isOpen) return;
+
+    getUserJoinedCommunitiesAction().then((communities) => {
+      setCommunitiesList((prev) => (communities.length > 0 ? communities : prev));
+    });
+
+    if (!userNameProp) {
+      getCurrentUserDisplayAction().then((user) => {
+        if (user) {
+          setUserName(user.username);
+          setUserAvatar(user.avatarUrl ?? undefined);
+        }
+      });
+    }
+  }, [isOpen, userNameProp]);
 
   // Debounce para previsualizar metadata de URL
   useEffect(() => {

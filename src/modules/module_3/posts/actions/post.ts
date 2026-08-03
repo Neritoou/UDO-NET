@@ -9,8 +9,7 @@ import {
   getCommunityBySlug,
   isUserSubscribed 
 } from "@module_2/communities/exports";
-
-const MOCK_USER_ID = '00000000-0000-0000-0000-000000000001';
+import { getCurrentUser, getCurrentUserId } from "@module_1/auth/exports";
 
 export interface CommunityOption {
   id: string;
@@ -28,7 +27,10 @@ export async function getPostsByUserAction(userId: string): Promise<UnifiedPost[
 
 export async function getUserJoinedCommunitiesAction(): Promise<CommunityOption[]> {
   try {
-    const mainCommunities = await getUserMainCommunities(MOCK_USER_ID);
+    const currentUserId = await getCurrentUserId();
+    if (!currentUserId) return [];
+
+    const mainCommunities = await getUserMainCommunities(currentUserId);
 
     return (mainCommunities || []).map((community: Community) => ({
       id: community.id,
@@ -44,6 +46,22 @@ export async function getUserJoinedCommunitiesAction(): Promise<CommunityOption[
     }
 
     return [{ id: "00000000-0000-0000-0000-000000000002", name: "General" }];
+  }
+}
+
+export interface CurrentUserDisplay {
+  username: string;
+  avatarUrl: string | null;
+}
+
+/** Devuelve los datos del usuario autenticado que necesita el modal de creación de posts. */
+export async function getCurrentUserDisplayAction(): Promise<CurrentUserDisplay | null> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return null;
+    return { username: user.username, avatarUrl: user.avatar_url ?? null };
+  } catch (error) {
+    return null;
   }
 }
 
@@ -85,8 +103,13 @@ export async function createPostAction(formData: FormData | {
       return { success: false, error: "Debes seleccionar una comunidad." };
     }
 
+    const currentUserId = await getCurrentUserId();
+    if (!currentUserId) {
+      return { success: false, error: "Debes iniciar sesión para publicar." };
+    }
+
     try {
-      const hasMembership = await isUserSubscribed(MOCK_USER_ID, payload.communityId);
+      const hasMembership = await isUserSubscribed(currentUserId, payload.communityId);
       if (!hasMembership) {
         return { 
           success: false, 
