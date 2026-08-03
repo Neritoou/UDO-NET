@@ -14,6 +14,7 @@ export type DatabasePostLink = PostLink;
 export type DatabaseReply = Reply & {
   author?: DatabaseUser;
   nestedReplies?: DatabaseReply[];
+  votes?: { user_id: string; value: number; weight?: number }[];
 };
 
 export type UnifiedPost = Omit<Post, 'status'> & {
@@ -64,7 +65,7 @@ export async function getThread(id: string): Promise<UnifiedPost | null> {
       communities(name),
       links:post_links(*),
       post_tags(tag:tags(name)),
-      replies(*, author:users(id, username, avatar_url, reputation, role))
+      replies(*, author:users(id, username, avatar_url, reputation, role), votes(user_id, value, weight))
     `)
     .eq('id', id)
     .single();
@@ -75,15 +76,29 @@ export async function getThread(id: string): Promise<UnifiedPost | null> {
 
   const formattedTags = data.post_tags?.map((pt: { tag: { name: string } }) => pt.tag.name) || [];
 
+  const rawReplies = data.replies || [];
+  const processedReplies: DatabaseReply[] = rawReplies.map((r: any) => {
+    const votesList = r.votes || [];
+    const calculatedVoteCount = votesList.length > 0
+      ? votesList.reduce((sum: number, v: { value: number; weight?: number }) => sum + (v.value * (v.weight || 1)), 0)
+      : (r.vote_count || 0);
+
+    return {
+      ...r,
+      vote_count: Math.round(calculatedVoteCount),
+      votes: votesList
+    };
+  });
+
   const post: UnifiedPost = {
     ...data,
     community_name: data.communities?.name || 'General',
     tags: formattedTags,
-    replies_count: data.replies?.length || 0,
+    replies_count: rawReplies.length,
     votes_count: 0
   };
 
-  post.replies = buildReplyTree(data.replies || []);
+  post.replies = buildReplyTree(processedReplies);
 
   return post;
 }
