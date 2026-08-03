@@ -7,3 +7,4 @@ export { ChevronLeftIcon } from './ChevronLeftIcon';
 export { UpvoteIcon } from './UpvoteIcon';
 export { DownvoteIcon } from './DownvoteIcon';
 export { PaperPlaneIcon } from './PaperPlaneIcon';
+export { CommentIcon } from './CommentIcon';

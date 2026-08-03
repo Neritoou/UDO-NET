@@ -4,12 +4,14 @@ import { revalidatePath } from "next/cache";
 import { createPost, getPosts, getPostsByUser, UnifiedPost } from "@module_3/posts/services/post.service";
 import { getLinkMetadata } from "./links";
 import { Community } from "@/lib/types";
-import { 
-  getUserMainCommunities, 
+import {
+  getUserMainCommunities,
   getCommunityBySlug,
-  isUserSubscribed 
+  isUserSubscribed
 } from "@module_2/communities/exports";
 import { getCurrentUser, getCurrentUserId } from "@module_1/auth/exports";
+
+import { isValidUrl } from "./validateUrl";
 
 export interface CommunityOption {
   id: string;
@@ -99,6 +101,22 @@ export async function createPostAction(formData: FormData | {
       return { success: false, error: "El título es obligatorio." };
     }
 
+    if (payload.title.trim().length > 150) {
+      return { success: false, error: "El título no puede tener más de 150 caracteres." };
+    }
+
+    if (payload.content && payload.content.length > 3000) {
+      return { success: false, error: "El contenido no puede tener más de 3000 caracteres." };
+    }
+
+    if (payload.links && payload.links.length > 0) {
+      for (const link of payload.links) {
+        if (!isValidUrl(link)) {
+          return { success: false, error: "La URL del enlace adjunto no es válida." };
+        }
+      }
+    }
+
     if (!payload.communityId) {
       return { success: false, error: "Debes seleccionar una comunidad." };
     }
@@ -111,9 +129,9 @@ export async function createPostAction(formData: FormData | {
     try {
       const hasMembership = await isUserSubscribed(currentUserId, payload.communityId);
       if (!hasMembership) {
-        return { 
-          success: false, 
-          error: "Debes estar suscrito a esta comunidad para poder publicar en ella." 
+        return {
+          success: false,
+          error: "Debes estar suscrito a esta comunidad para poder publicar en ella."
         };
       }
     } catch (subError) {

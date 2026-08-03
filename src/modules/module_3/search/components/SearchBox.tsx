@@ -83,7 +83,7 @@ export default function SearchBox({ children }: SearchBoxProps) {
   };
 
   return (
-    <div className="bg-[#E5EBF3] rounded-[35px] p-0 space-y-4 w-full overflow-visible">
+    <div className="bg-[#E5EBF3] rounded-[35px] p-0 space-y-4 w-full overflow-hidden">
 
       {/* 1. Tarjeta Blanca del Buscador */}
       <div className="bg-pure-white rounded-[30px] p-5 sm:p-6 w-full">

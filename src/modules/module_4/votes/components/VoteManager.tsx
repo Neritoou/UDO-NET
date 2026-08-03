@@ -33,6 +33,7 @@ interface VoteManagerProps {
   initialVoteCount: number;
   currentSessionUserId: string;
   replyAuthorId: string;
+  initialUserVote?: 1 | -1 | null;
 }
 
 export default function VoteManager({
@@ -40,11 +41,17 @@ export default function VoteManager({
   initialVoteCount,
   currentSessionUserId,
   replyAuthorId,
+  initialUserVote = null,
 }: VoteManagerProps) {
   const [voteCount, setVoteCount] = useState<number>(initialVoteCount);
-  const [currentVote, setCurrentVote] = useState<1 | -1 | null>(null);
+  const [currentVote, setCurrentVote] = useState<1 | -1 | null>(initialUserVote);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [toast, setToast] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  React.useEffect(() => {
+    setVoteCount(initialVoteCount);
+    setCurrentVote(initialUserVote);
+  }, [initialVoteCount, initialUserVote]);
 
   const isAuthor = currentSessionUserId === replyAuthorId;
 

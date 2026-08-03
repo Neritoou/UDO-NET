@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { getThread } from '@module_3/posts/actions/thread';
 import { addReplyAction } from '@module_3/posts/actions/reply';
 import VoteManager from '@module_4/votes/components/VoteManager';
+import UserBadge from '@module_4/reputation/components/UserBadge';
 import { UnifiedPost, DatabaseReply } from '@module_3/posts/services/supabase-service';
 import UserAvatar from '../../components/UserAvatar';
 import Toast from '../../components/Toast';
@@ -142,6 +143,9 @@ function ReplyItem({ reply, postId, onAddReply, onShowToast, parentAuthorName, c
     });
   };
 
+  const userVoteObj = currentUserId && reply.votes ? reply.votes.find(v => v.user_id === currentUserId) : null;
+  const initialUserVote = userVoteObj ? (userVoteObj.value as 1 | -1) : null;
+
   return (
     <div className="bg-pure-white rounded-[24px] p-5 font-candal font-normal min-w-0 transition-all border-0">
       {/* Cabecera del Autor (usuario • fecha en una misma línea) */}
@@ -172,6 +176,7 @@ function ReplyItem({ reply, postId, onAddReply, onShowToast, parentAuthorName, c
           initialVoteCount={reply.vote_count || 0}
           currentSessionUserId={currentUserId || ''}
           replyAuthorId={reply.user_id || reply.author?.id || ''}
+          initialUserVote={initialUserVote}
         />
 
         <button 
