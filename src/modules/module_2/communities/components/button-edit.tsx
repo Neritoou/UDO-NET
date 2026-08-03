@@ -4,7 +4,7 @@ import { useState } from "react";
 import ModalEditSubCommunity from "@module_2/communities/components/modal-edit";
 import { Community } from "@/lib/types";
 
-export default function EditSubcommunity({ community, subcommunity }:{ community:Community, subcommunity:Community }){
+export default function EditSubcommunity({ community, subcommunity }:{ community:Community, subcommunity?:Community }){
     const [isOpen, setIsOpen] = useState<boolean>(false);
 
     return(

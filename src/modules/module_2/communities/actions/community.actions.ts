@@ -116,9 +116,9 @@ export async function updateSubcommunityAction(communityId: string, name: string
 
   const community = await getCommunityById(communityId)
   if (!community) return { error: 'La subcomunidad no fue encontrada.' }
-  if (community.parent_id === null) {
+  /*if (community.parent_id === null) {
     return { error: 'No se pueden editar las comunidades principales.' }
-  }
+  }*/
 
   if (!canManageCommunity(community, user.id, user.role)) {
     return { error: 'No tienes permisos para editar esta subcomunidad.' }

@@ -16,7 +16,7 @@ interface IEDITFORM {
     isOpen: boolean;
     setIsOpen: Dispatch<SetStateAction<boolean>>;
     community: Community;
-    subcommunity: Community;
+    subcommunity?: Community;
 };
 
 interface IERRDATA{
@@ -46,10 +46,10 @@ export default function ModalEditSubCommunity({ community, subcommunity, isOpen,
     const [msgErr, setMsgErr] = useState<IERRDATA>(ERR_DATA_FORM);
     const [msgErrSrv, setMsgErrSrv] = useState<string>("");
     
-    const [name, setName] = useState<string>(subcommunity.name);
-    const [descripcion, setDescription] = useState<string>(subcommunity.description)
-    const [bannerPreview, setBannerPreview] = useState<string | null>(subcommunity.banner_url);
-    const [photoPreview, setPhotoPreview] = useState<string | null>(subcommunity.icon_url);
+    const [name, setName] = useState<string>(!subcommunity ? community.name : subcommunity.name);
+    const [descripcion, setDescription] = useState<string>(!subcommunity ? community.description : subcommunity.description)
+    const [bannerPreview, setBannerPreview] = useState<string | null>(!subcommunity ? community.banner_url : subcommunity.banner_url);
+    const [photoPreview, setPhotoPreview] = useState<string | null>(!subcommunity ? community.icon_url : subcommunity.icon_url);
 
     const [fileBanner, setFileBanner] = useState<File | undefined>(undefined);
     const [filePhoto, setFilePhoto] = useState<File | undefined>(undefined);
@@ -66,7 +66,8 @@ export default function ModalEditSubCommunity({ community, subcommunity, isOpen,
 
         startTransition(async () => {
             try {
-                const result = await updateSubcommunityAction(subcommunity.id, name, descripcion);
+                const communityId:string = !subcommunity ? community.id : subcommunity.id 
+                const result = await updateSubcommunityAction(communityId, name, descripcion);
 
                 if(name.length < MIN_NAME_LENGTH || descripcion.length < MIN_DESCRIPTION_LENGTH) return;
 
@@ -78,7 +79,7 @@ export default function ModalEditSubCommunity({ community, subcommunity, isOpen,
                 if (filePhoto) {
                     try {
                         const base64Icon = await fileToBase64(filePhoto);
-                        const iconResult = await uploadCommunityIconAction(subcommunity.id, base64Icon);
+                        const iconResult = await uploadCommunityIconAction(communityId, base64Icon);
 
                         if (iconResult.error) {
                             setMsgErrSrv(`Se actualizó la información, pero hubo un error al cargar el icono: ${iconResult.error}`);
@@ -93,7 +94,7 @@ export default function ModalEditSubCommunity({ community, subcommunity, isOpen,
                 if (fileBanner) {
                     try {
                         const base64Banner = await fileToBase64(fileBanner);
-                        const bannerResult = await uploadCommunityBannerAction(subcommunity.id, base64Banner);
+                        const bannerResult = await uploadCommunityBannerAction(communityId, base64Banner);
 
                         if (bannerResult.error) {
                             setMsgErrSrv(`Se actualizó la información, pero hubo un error al cargar el banner: ${bannerResult.error}`);
@@ -106,7 +107,11 @@ export default function ModalEditSubCommunity({ community, subcommunity, isOpen,
                 }
                 
                 setIsOpen(false);
-                router.push(`/communities/${community.slug}/${result.data!.slug}`);
+                if(!subcommunity){
+                    router.push(`/communities/${community.slug}`);
+                }else{
+                    router.push(`/communities/${community.slug}/${result.data!.slug}`);
+                };
             } catch (e: unknown) {
                 if (e instanceof Error) {
                     setMsgErrSrv(e.message);
@@ -300,11 +305,19 @@ export default function ModalEditSubCommunity({ community, subcommunity, isOpen,
             <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 font-sans">
                 <div className="flex justify-between items-center px-8 pt-6 pb-2">
                     <h2 className="text-xl font-bold text-gray-900 mx-auto pl-6">
-                        Modificando {subcommunity.name} dentro de {community.name}
+                        {!subcommunity 
+                        ?
+                        `Modificando ${community.name}`
+                        :
+                        `Modificando ${subcommunity.name} dentro de ${community.name}`
+                        }
                     </h2>
                     <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100" onClick={() => { 
-                        setIsOpen(false); setMsgErr(ERR_DATA_FORM); setMsgErrSrv(""); setBannerPreview(subcommunity.banner_url); setPhotoPreview(subcommunity.icon_url);
-                        setName(subcommunity.name); setDescription(subcommunity.description); }}>
+                        setIsOpen(false); setMsgErr(ERR_DATA_FORM); setMsgErrSrv(""); 
+                        setBannerPreview(!subcommunity ? community.icon_url : subcommunity.icon_url); 
+                        setPhotoPreview(!subcommunity ? community.banner_url : subcommunity.banner_url);
+                        setName(!subcommunity ? community.name : subcommunity.name); 
+                        setDescription(!subcommunity ? community.description : subcommunity.description); }}>
                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                         </svg>

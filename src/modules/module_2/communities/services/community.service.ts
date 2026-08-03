@@ -200,7 +200,7 @@ export async function updateSubcommunity(communityId: string, fields: { name?: s
     .from('communities')
     .update(fields)
     .eq('id', communityId)
-    .not('parent_id', 'is', null)
+    //.not('parent_id', 'is', null)
     .select()
     .single()
 
