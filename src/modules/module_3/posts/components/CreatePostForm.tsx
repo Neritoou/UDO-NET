@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPostAction, getUserJoinedCommunitiesAction, getCurrentUserDisplayAction, CommunityOption } from "@module_3/posts/actions/post";
 import { getLinkMetadata } from "@module_3/posts/actions/links";
+import { isValidUrl } from "../actions/validateUrl";
 import PopoverSelect from '../../components/PopoverSelect';
 import UserAvatar from '../../components/UserAvatar';
 import { CloseIcon } from '../../components/icons';
@@ -22,11 +23,11 @@ interface CreatePostModalProps {
   userName?: string;
 }
 
-export default function CreatePostModal({ 
-  isOpen, 
-  onClose, 
+export default function CreatePostModal({
+  isOpen,
+  onClose,
   initialCommunities = [],
-  initialCommunity = "General", 
+  initialCommunity = "General",
   userAvatar: userAvatarProp,
   userName: userNameProp
 }: CreatePostModalProps) {
@@ -62,10 +63,9 @@ export default function CreatePostModal({
 
   // Debounce para previsualizar metadata de URL
   useEffect(() => {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
     const trimmedUrl = urlInput.trim();
 
-    if (!trimmedUrl.match(urlRegex)) {
+    if (!trimmedUrl || !isValidUrl(trimmedUrl)) {
       setMetadata(null);
       setLoading(false);
       return;
@@ -115,6 +115,13 @@ export default function CreatePostModal({
     formData.append("tags", tags);
 
     if (urlInput.trim()) {
+      if (!isValidUrl(urlInput.trim())) {
+        setStatusMessage({
+          success: false,
+          text: "El enlace ingresado no es una URL válida (ej: https://ejemplo.com)."
+        });
+        return;
+      }
       formData.append("detectedUrl", urlInput.trim());
     }
 
@@ -171,17 +178,17 @@ export default function CreatePostModal({
         <form onSubmit={handlePublish} className="p-6 sm:p-8 space-y-5">
 
           {/* Usuario y Selección de Comunidad */}
-          <div className="flex items-center space-x-3 pt-1">
+          <div className="flex items-center space-x-3 pt-1 min-w-0">
 
             {/* Avatar */}
             <UserAvatar avatarUrl={userAvatar} username={userName} size="w-12 h-12" />
 
-            {/* Nombre del Usuario */}
-            <div className="flex flex-col space-y-1">
-              <span className="font-candal text-p font-normal text-main-black leading-tight">
+            {/* Nombre del Usuario y Selector */}
+            <div className="flex flex-col space-y-1 min-w-0 flex-1">
+              <span className="font-candal text-p font-normal text-main-black leading-tight truncate">
                 {userName}
               </span>
-              
+
               {/* Selector de Comunidad */}
               <PopoverSelect
                 options={communitiesList}
@@ -189,7 +196,7 @@ export default function CreatePostModal({
                 onSelect={(val) => setCommunity(val)}
                 titleHeader="Comunidad"
                 showSearchInput={true}
-                popoverWidth="w-[135px]"
+                popoverWidth="w-56"
                 originTop={true}
               />
             </div>
@@ -197,28 +204,37 @@ export default function CreatePostModal({
 
           {/* Título de la Publicación */}
           <div className="space-y-1">
+            <div className="flex justify-between items-center px-1 text-extra-tiny font-candal font-normal text-alpha-black">
+              <span>Título</span>
+              <span>{title.length}/150</span>
+            </div>
             <input
               type="text"
               name="title"
               placeholder="Título de la publicación..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              maxLength={150}
               required
               className="w-full px-4 py-2 bg-lite-white text-main-black font-candal font-normal text-p placeholder:font-candal placeholder:font-normal placeholder:text-alpha-black rounded-xl focus:outline-none focus:ring-2 focus:ring-main-blue/50 border-0"
             />
           </div>
 
           {/* Caja Principal de Pregunta */}
-          <div className="relative">
+          <div className="relative space-y-1">
             <textarea
               name="postText"
               placeholder="Haz una pregunta..."
               value={postText}
               onChange={(e) => setPostText(e.target.value)}
               rows={4}
+              maxLength={3000}
               required
               className="w-full p-4 border-2 border-main-blue/70 focus:border-main-blue bg-pure-white text-main-black font-candal font-normal text-p-plus placeholder:text-alpha-black placeholder:font-candal placeholder:font-normal rounded-[20px] focus:outline-none resize-none transition-all shadow-inner"
             />
+            <div className="text-right text-extra-tiny font-candal font-normal text-alpha-black px-1">
+              {postText.length}/3000
+            </div>
           </div>
 
           {/* Controles Inferiores */}
@@ -285,11 +301,10 @@ export default function CreatePostModal({
           {/* Mensaje de Estado */}
           {statusMessage && (
             <div
-              className={`p-3 rounded-2xl font-candal font-normal text-tiny text-center transition-all ${
-                statusMessage.success
+              className={`p-3 rounded-2xl font-candal font-normal text-tiny text-center transition-all ${statusMessage.success
                   ? 'bg-regular-blue/15 text-regular-blue border border-regular-blue/30'
                   : 'bg-deep-orange/15 text-deep-orange border border-deep-orange/30'
-              }`}
+                }`}
             >
               {statusMessage.text}
             </div>
