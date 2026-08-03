@@ -3,15 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { createPost, getPosts, getPostsByUser, UnifiedPost } from "@module_3/posts/services/post.service";
 import { getLinkMetadata } from "./links";
-import { Community } from "@/lib/types";
 import {
   getUserMainCommunities,
-  getCommunityBySlug,
   isUserSubscribed
 } from "@module_2/communities/exports";
 import { getCurrentUser, getCurrentUserId } from "@module_1/auth/exports";
 
 import { isValidUrl } from "./validateUrl";
+import { getUserSubcommunities } from "@/modules/module_2/communities/services/community.service";
 
 export interface CommunityOption {
   id: string;
@@ -29,25 +28,24 @@ export async function getPostsByUserAction(userId: string): Promise<UnifiedPost[
 
 export async function getUserJoinedCommunitiesAction(): Promise<CommunityOption[]> {
   try {
-    const currentUserId = await getCurrentUserId();
-    if (!currentUserId) return [];
+    const currentUserId = await getCurrentUserId()
+    if (!currentUserId) return []
 
-    const mainCommunities = await getUserMainCommunities(currentUserId);
+    const mainCommunities = await getUserMainCommunities(currentUserId)
 
-    return (mainCommunities || []).map((community: Community) => ({
-      id: community.id,
-      name: community.name,
-    }));
-  } catch (error) {
-    try {
-      const generalCommunity = await getCommunityBySlug("temas-generales");
-      if (generalCommunity) {
-        return [{ id: generalCommunity.id, name: generalCommunity.name }];
+    const allCommunities: CommunityOption[] = []
+
+    for (const main of mainCommunities) {
+      allCommunities.push({ id: main.id, name: main.name })
+      const subs = await getUserSubcommunities(currentUserId, main.id)
+      for (const sub of subs) {
+        allCommunities.push({ id: sub.id, name: `${main.name} / ${sub.name}` })
       }
-    } catch (fallbackError) {
     }
 
-    return [{ id: "00000000-0000-0000-0000-000000000002", name: "General" }];
+    return allCommunities
+  } catch {
+    return []
   }
 }
 
