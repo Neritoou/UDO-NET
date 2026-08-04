@@ -6,6 +6,13 @@ export const IMAGE_PRESETS = {
     path: (id: string) => `users/${id}/avatar`,
     defaultUrl: '/defaults/avatar.svg',
   },
+  userBanner: {
+    maxSize: 3 * 1024 * 1024,
+    allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+    dimensions: { width: 1920, height: 384 },
+    path: (id: string) => `users/${id}/banner`,
+    defaultUrl: '/udo-arch.jpg',
+  },
   communityIcon: {
     maxSize: 500 * 1024,
     allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],

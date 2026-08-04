@@ -10,7 +10,9 @@ import Toast from '../../components/Toast';
 import {
   PaperPlaneIcon,
   ChevronRightIcon,
-  CommentIcon
+  CommentIcon,
+  UpvoteIcon,
+  DownvoteIcon
 } from '../../components/icons';
 import { formatDate } from '@/lib/utils/formatDate';
 import { ReportModal } from '@/modules/module_5/reports/components/ReportModal';
@@ -20,6 +22,7 @@ export interface PostCardProps {
   post: UnifiedPost;
   onSelectPost?: (id: string) => void;
   isThreadView?: boolean;
+  isCompact?: boolean;
   onMainReplyClick?: () => void;
   showMainReplyBox?: boolean;
   onTagClick?: (tag: string) => void;
@@ -30,6 +33,7 @@ export function PostCard({
   post,
   onSelectPost,
   isThreadView = false,
+  isCompact = false,
   onMainReplyClick,
   showMainReplyBox = false,
   onTagClick,
@@ -87,7 +91,7 @@ export function PostCard({
   const visibleTags = hasManyTags ? tags.slice(0, 2) : tags;
 
   return (
-    <article className="bg-pure-white rounded-[30px] p-6 transition-all font-candal font-normal relative">
+    <article className={`bg-pure-white transition-all font-candal font-normal relative ${isCompact ? 'rounded-2xl p-4 shadow-sm' : 'rounded-[30px] p-6'}`}>
 
       {toast && (
         <Toast
@@ -98,10 +102,10 @@ export function PostCard({
       )}
 
       {/* Cabecera del post */}
-      <div className="-mx-6 px-6 pt-1 pb-4 mb-4 border-b border-white-gray flex items-center justify-between gap-4 min-w-0">
+      <div className={`border-b border-white-gray flex items-center justify-between gap-3 min-w-0 ${isCompact ? '-mx-4 px-4 pt-0.5 pb-2.5 mb-3' : '-mx-6 px-6 pt-1 pb-4 mb-4'}`}>
         <h2
           onClick={() => onSelectPost && onSelectPost(post.id)}
-          className="font-candal font-normal text-h4 text-main-black hover:text-main-blue transition-colors cursor-pointer leading-tight flex-1 min-w-0 break-words [overflow-wrap:anywhere]"
+          className={`font-candal font-normal text-main-black hover:text-main-blue transition-colors cursor-pointer leading-tight flex-1 min-w-0 break-words [overflow-wrap:anywhere] ${isCompact ? 'text-h5' : 'text-h4'}`}
         >
           {post.title}
         </h2>
@@ -160,14 +164,14 @@ export function PostCard({
       </div>
 
       {/* Fila del autor */}
-      <div className="flex items-center justify-between gap-4 mb-4 min-w-0">
-        <div className="flex items-start gap-4 min-w-0">
-          <div className="mt-[3px] shrink-0">
-            <UserAvatar avatarUrl={post.author?.avatar_url} username={authorName} size="w-[50px] h-[50px]" />
+      <div className={`flex items-center justify-between gap-3 min-w-0 ${isCompact ? 'mb-2.5' : 'mb-4'}`}>
+        <div className="flex items-start gap-3 min-w-0">
+          <div className="mt-[2px] shrink-0">
+            <UserAvatar avatarUrl={post.author?.avatar_url} username={authorName} size={isCompact ? 'w-[36px] h-[36px]' : 'w-[50px] h-[50px]'} />
           </div>
 
-          <div className="flex flex-col space-y-[7px] min-w-0">
-            <h4 className="font-candal font-normal text-h4 text-main-black leading-tight m-0 p-0 break-words min-w-0">
+          <div className="flex flex-col space-y-[3px] min-w-0">
+            <h4 className={`font-candal font-normal text-main-black leading-tight m-0 p-0 break-words min-w-0 ${isCompact ? 'text-p font-bold' : 'text-h4'}`}>
               {authorName}
             </h4>
 
@@ -180,7 +184,7 @@ export function PostCard({
               </div>
             )}
 
-            <h5 className="font-candal font-normal text-h5 text-alpha-black leading-tight m-0 p-0 break-words min-w-0">
+            <h5 className={`font-candal font-normal text-alpha-black leading-tight m-0 p-0 break-words min-w-0 ${isCompact ? 'text-extra-tiny' : 'text-h5'}`}>
               {authorCareer}
             </h5>
           </div>

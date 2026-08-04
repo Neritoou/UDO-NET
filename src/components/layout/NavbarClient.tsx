@@ -8,6 +8,8 @@ import { UserAvatar } from '@module_1/profiles/exports.client'
 import { LogoutButton } from '@module_1/auth/exports.client'
 import { NotificationDropdown } from '@module_4/notifications/exports.client'
 
+import { useRouter } from 'next/navigation'
+
 export function NavbarClient({
   user,
   initialNotifications,
@@ -15,8 +17,19 @@ export function NavbarClient({
   user: User | null
   initialNotifications: Notification[]
 }) {
+  const router = useRouter()
+  const [headerSearch, setHeaderSearch] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  const handleHeaderSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (headerSearch.trim()) {
+      router.push(`/search?q=${encodeURIComponent(headerSearch.trim())}`)
+    } else {
+      router.push('/search')
+    }
+  }
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -30,13 +43,55 @@ export function NavbarClient({
 
   return (
     <>
-      {/* Espaciador para empujar acciones a la derecha */}
-      <div className="flex-1" />
+      {/* Buscador Absolutamente Centrado en la ventana con breakpoints responsivos */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-130px)] max-w-[220px] xs:max-w-[280px] sm:max-w-md md:max-w-lg transition-all duration-200 z-10">
+        <form onSubmit={handleHeaderSearch} className="relative w-full">
+          <input
+            type="text"
+            value={headerSearch}
+            onChange={(e) => setHeaderSearch(e.target.value)}
+            placeholder="Buscar..."
+            className="w-full h-9 pl-4 pr-10 rounded-full bg-[#EEEEEE] text-main-black text-xs font-bold border-0 focus:outline-none focus:ring-2 focus:ring-regular-blue placeholder:text-gray-500 shadow-inner"
+          />
+          <button
+            type="submit"
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-700 hover:text-main-black p-1 border-0 bg-transparent cursor-pointer"
+            aria-label="Buscar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+        </form>
+      </div>
 
-      {/* Acciones del usuario */}
-      <div className="flex items-center gap-1 shrink-0">
+      {/* Acciones del usuario fijadas en el extremo derecho */}
+      <div className="flex items-center gap-2 shrink-0 ml-auto z-10">
         {user ? (
           <>
+            {/* Ícono de Inicio (Home) matching la imagen de referencia */}
+            <Link
+              href="/"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#EEEEEE] text-main-black transition-all duration-200 hover:bg-gray-300 border-0"
+              title="Inicio"
+              aria-label="Inicio"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className="h-5 w-5 text-main-black"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
+                />
+              </svg>
+            </Link>
+
             {/* NotificationDropdown del Módulo 4 */}
             <NotificationDropdown initialNotifications={initialNotifications} />
 

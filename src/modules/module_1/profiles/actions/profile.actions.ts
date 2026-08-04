@@ -7,7 +7,7 @@ import {
   updateAvatarUrl,
   updateUserProfile,
 } from '../services/profile-service'
-import { deleteUserAvatar, uploadUserAvatar } from '../services/storage-service'
+import { deleteUserAvatar, uploadUserAvatar, uploadUserBanner } from '../services/storage-service'
 import type { ProfileFormState } from '../types'
 
 /**
@@ -129,4 +129,24 @@ export async function deleteAvatarAction(): Promise<ProfileFormState> {
 
   revalidateProfilePaths()
   return { message: 'Foto de perfil eliminada.' }
+}
+
+/** Sube una imagen nueva de portada (banner) de perfil. */
+export async function updateBannerAction(
+  prevState: ProfileFormState,
+  formData: FormData
+): Promise<ProfileFormState> {
+  const userId = await getCurrentUserId()
+  if (!userId) return { error: 'Debes iniciar sesión para cambiar tu portada.' }
+
+  const file = formData.get('banner')
+  if (!(file instanceof File)) {
+    return { fieldErrors: { banner: 'Selecciona una imagen para subir.' } }
+  }
+
+  const result = await uploadUserBanner(userId, file)
+  if ('error' in result) return { fieldErrors: { banner: result.error } }
+
+  revalidateProfilePaths()
+  return { message: 'Portada de perfil actualizada.' }
 }

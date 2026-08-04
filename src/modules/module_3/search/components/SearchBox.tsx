@@ -34,7 +34,6 @@ export default function SearchBox({ children }: SearchBoxProps) {
   const filterOptions = [
     { id: 'most_replied', name: 'Más Respondidos' },
     { id: 'most_recent', name: 'Más Recientes' },
-    { id: 'most_voted', name: 'Más Votados' },
   ];
 
   // Clase para botones

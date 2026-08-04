@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/db/server';
 import { calculateWeight } from '@/modules/module_4/votes/services/weight.service';
 import { createNotification } from '@/modules/module_4/notifications/services/notification.service';
+import { updateUserReputation } from '@/modules/module_4/reputation/services/reputation.service';
 import { getCurrentUserId } from '@module_1/auth/exports';
 import { revalidatePath } from 'next/cache';
 
@@ -57,21 +58,27 @@ export async function castVote(replyId: string, value: 1 | -1) {
 
     const weight = await calculateWeight(currentUserId);
     let shouldNotify = false;
+    let reputationDelta = 0;
 
-    // 3. Lógica de mutación (insertar, actualizar o eliminar)
+    // 3. Lógica de mutación (insertar, actualizar o eliminar) y cálculo de reputación
     if (existingVote) {
       if (existingVote.value === value) {
+        // Omitir o remover voto existente
         const { error: deleteError } = await supabase.from('votes').delete().eq('id', existingVote.id);
         if (deleteError) throw deleteError;
+        reputationDelta = value === 1 ? -10 : 5;
       } else {
+        // Cambiar voto (ej: de +1 a -1 o de -1 a +1)
         const { error: updateError } = await supabase
           .from('votes')
           .update({ value, weight })
           .eq('id', existingVote.id);
         if (updateError) throw updateError;
         shouldNotify = true;
+        reputationDelta = value === 1 ? 15 : -15;
       }
     } else {
+      // Insertar nuevo voto
       const { error: insertError } = await supabase
         .from('votes')
         .insert({
@@ -82,6 +89,7 @@ export async function castVote(replyId: string, value: 1 | -1) {
         });
       if (insertError) throw insertError;
       shouldNotify = true;
+      reputationDelta = value === 1 ? 10 : -5;
     }
 
     // 4. Actualizar el vote_count de la respuesta
@@ -102,12 +110,15 @@ export async function castVote(replyId: string, value: 1 | -1) {
         .eq('id', replyId);
     }
 
-    // 5. Notificar al autor solo si el voto se agregó o cambió
+    // 5. Actualizar la reputación del autor de la respuesta
+    await updateUserReputation(reply.user_id, reputationDelta);
+
+    // 6. Notificar al autor solo si el voto se agregó o cambió
     if (shouldNotify) {
       await createNotification(reply.user_id, 'vote', replyId);
     }
 
-    // 6. Revalidar la caché
+    // 7. Revalidar la caché
     revalidatePath('/', 'layout');
 
     return { success: true };
