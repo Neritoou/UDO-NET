@@ -1,7 +1,7 @@
 
 # Notas de la Versión
 
-## feat: Integración de los Módulos 4 y 5, corrección de RLS de enlaces y rediseño de interfaz
+## feat: correccion del modulo 4, corrección de RLS de enlaces y rediseño de interfaz
 
 ### 🛡️ Moderación (Módulo 5)
 - Se integró la funcionalidad de **borrado lógico (soft-delete)** para publicaciones desde moderación tras ajustar las políticas de **RLS (Seguridad a Nivel de Filas)**.
