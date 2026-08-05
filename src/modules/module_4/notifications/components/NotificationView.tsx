@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { Notification } from '@/lib/types/notification'
 import { markNotificationsAsRead } from '@module_4/notifications/exports.client'
 
@@ -34,6 +35,7 @@ export default function NotificationView({
 }: {
   initialNotifications: Notification[]
 }) {
+  const router = useRouter()
   const [notifications, setNotifications] = useState(initialNotifications)
   const [selectedFilter, setSelectedFilter] = useState('all')
 
@@ -101,11 +103,15 @@ export default function NotificationView({
           {filteredNotifications.map((notification) => (
             <div
               key={notification.id}
-              onClick={() => !notification.is_read && handleMarkOneAsRead(notification.id)}
-              className={`flex items-start gap-3 rounded-2xl px-4 py-3 transition ${
+              onClick={() => {
+                if (!notification.is_read) handleMarkOneAsRead(notification.id);
+                const targetId = notification.target_post_id || notification.reference_id;
+                if (targetId) router.push(`/?thread=${targetId}`);
+              }}
+              className={`flex items-start gap-3 rounded-2xl px-4 py-3 transition cursor-pointer ${
                 notification.is_read
-                  ? 'bg-pure-white'
-                  : 'bg-blue-50 cursor-pointer hover:bg-blue-100'
+                  ? 'bg-pure-white hover:bg-gray-50'
+                  : 'bg-blue-50 hover:bg-blue-100'
               }`}
             >
               <span className="text-lg shrink-0">

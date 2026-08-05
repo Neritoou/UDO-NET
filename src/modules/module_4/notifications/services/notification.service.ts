@@ -23,40 +23,36 @@ export async function createNotification(
     const supabase = await createClient();
 
     // Consulta las preferencias de notificación del usuario desde la tabla users.
-    const { data: user, error: userError } = await supabase
+    const { data: user } = await supabase
       .from('users')
       .select('notification_preferences')
       .eq('id', userId)
       .single();
 
-    if (userError || !user) {
-      // No se pueden verificar las preferencias; se omite la notificación para no insertar sin consentimiento.
+    // Si el usuario tiene preferencias configuradas y desactivó explícitamente este tipo, se aborta.
+    const preferences = user?.notification_preferences as Record<string, boolean> | null;
+    if (preferences && typeof preferences === 'object' && preferences[type] === false) {
       return null;
     }
 
-    // Si el usuario tiene preferencias configuradas y desactivó este tipo, se aborta.
-    const preferences = user.notification_preferences as Record<string, boolean> | null;
-    if (preferences && preferences[type] === false) {
-      return null;
-    }
-
-    // El usuario tiene este tipo de notificación activado (o no tiene preferencias definidas). Se inserta el registro.
-    const { data: notification, error: insertError } = await supabase
+    // El usuario tiene este tipo activado (o no tiene preferencias explícitamente configuradas). Se inserta el registro.
+    const { error: insertError } = await supabase
       .from('notifications')
       .insert({
         user_id: userId,
         type,
         reference_id: referenceId,
         is_read: false,
-      })
-      .select('id')
-      .single();
+      });
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error('Error al insertar notificación:', insertError.message);
+      return null;
+    }
 
-    return notification;
-  } catch {
-    // Se retorna null para que los componentes que llamen a esta función puedan continuar sin fallar.
+    return true;
+  } catch (err) {
+    console.error('Error en createNotification:', err);
     return null;
   }
 }
@@ -75,7 +71,32 @@ export async function getUserNotifications(userId: string, limit: number = 20): 
     .limit(limit)
 
   if (error || !data) return []
-  return data
+
+  // Resolver el post_id objetivo para notificaciones de tipo 'vote'
+  const voteReplyIds = data
+    .filter((n) => n.type === 'vote' && n.reference_id)
+    .map((n) => n.reference_id as string)
+
+  let replyToPostMap: Record<string, string> = {}
+
+  if (voteReplyIds.length > 0) {
+    const { data: replyRows } = await supabase
+      .from('replies')
+      .select('id, post_id')
+      .in('id', voteReplyIds)
+
+    if (replyRows) {
+      replyToPostMap = replyRows.reduce((acc: Record<string, string>, r: any) => {
+        acc[r.id] = r.post_id
+        return acc
+      }, {})
+    }
+  }
+
+  return data.map((n) => ({
+    ...n,
+    target_post_id: n.type === 'vote' && n.reference_id ? (replyToPostMap[n.reference_id] || null) : n.reference_id
+  }))
 }
 
 /**

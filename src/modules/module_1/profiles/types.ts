@@ -58,7 +58,7 @@ export type UserReputation = {
 }
 
 /** Campos del formulario de perfil que pueden tener un error individual. */
-export type ProfileField = 'username' | 'bio' | 'avatar'
+export type ProfileField = 'username' | 'bio' | 'avatar' | 'banner'
 
 /** Estado que los Server Actions de perfil devuelven a los formularios. */
 export type ProfileFormState = {

@@ -9,18 +9,19 @@ export default async function NotificationsPage() {
 
   const notifications = await getUserNotifications(user.id, 50);
 
-  const getNotificationHref = (type: string, referenceId: string | null) => {
-    if (!referenceId) return '#';
-    
-    switch (type) {
+  const getNotificationHref = (notification: { type: string; reference_id: string | null; target_post_id?: string | null }) => {
+    const targetPostId = notification.target_post_id || notification.reference_id;
+
+    switch (notification.type) {
       case 'reply':
       case 'vote':
-        return `/posts/${referenceId}`;
+      case 'mention':
+        return targetPostId ? `/?thread=${targetPostId}` : '#';
       case 'warning':
       case 'report':
         return `/moderation`;
       default:
-        return '#';
+        return targetPostId ? `/?thread=${targetPostId}` : '#';
     }
   };
 
@@ -35,7 +36,7 @@ export default async function NotificationsPage() {
       ) : (
         <div className="space-y-2">
           {notifications.map((notification) => {
-            const href = getNotificationHref(notification.type, notification.reference_id);
+            const href = getNotificationHref(notification);
 
             return (
               <Link

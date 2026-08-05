@@ -58,6 +58,18 @@ export async function uploadUserAvatar(
   return uploadImage('avatar', userId, buffer)
 }
 
+/** Sube la portada del perfil del usuario y devuelve su URL pública. */
+export async function uploadUserBanner(
+  userId: string,
+  file: File
+): Promise<{ url: string } | { error: string }> {
+  const validationError = validateAvatarFile(file)
+  if (validationError) return { error: validationError }
+
+  const buffer = Buffer.from(await file.arrayBuffer())
+  return uploadImage('userBanner', userId, buffer)
+}
+
 /**
  * Elimina el avatar del usuario del bucket.
  *

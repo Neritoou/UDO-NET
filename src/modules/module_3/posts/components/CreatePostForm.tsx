@@ -19,6 +19,7 @@ interface CreatePostModalProps {
   onClose: () => void;
   initialCommunities?: CommunityOption[];
   initialCommunity?: string;
+  initialText?: string;
   userAvatar?: string;
   userName?: string;
 }
@@ -28,6 +29,7 @@ export default function CreatePostModal({
   onClose,
   initialCommunities = [],
   initialCommunity = "General",
+  initialText,
   userAvatar: userAvatarProp,
   userName: userNameProp
 }: CreatePostModalProps) {
@@ -41,7 +43,13 @@ export default function CreatePostModal({
   const [communitiesList, setCommunitiesList] = useState<CommunityOption[]>(initialCommunities);
   const [userName, setUserName] = useState(userNameProp || "Estudiante UDO");
   const [userAvatar, setUserAvatar] = useState<string | undefined>(userAvatarProp);
-  const [postText, setPostText] = useState("");
+  const [postText, setPostText] = useState(initialText || "");
+
+  useEffect(() => {
+    if (isOpen && initialText) {
+      setPostText(initialText);
+    }
+  }, [isOpen, initialText]);
   const [urlInput, setUrlInput] = useState("");
   const [tags, setTags] = useState("");
   const [metadata, setMetadata] = useState<LinkMetadata | null>(null);

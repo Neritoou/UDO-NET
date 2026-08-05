@@ -149,7 +149,10 @@ export async function createPost(formData: FormData | CreatePostPayload): Promis
       content,
       author_id: userId,
       community_id: communityId || null,
-      status: 'open'
+      status: 'open',
+      // (DiGiorgio-L): When creating a post, the SQL database by default sets the is_private property to true, these lines are meant to change that to allow for passing the RLS check.
+      is_private: false,
+      is_hidden: false
     })
     .select()
     .single();
@@ -204,9 +207,34 @@ export async function search(term: string = '', community?: string, tags?: strin
       communities(name),
       links:post_links(*),
       post_tags(tag:tags(name)),
-      replies(id)
+      replies(id, votes(value, weight))
     `)
     .eq('is_hidden', false);
+
+  if (tags && tags.length > 0) {
+    const { data: tagData } = await supabase
+      .from('tags')
+      .select('id')
+      .in('name', tags);
+
+    const tagIds = tagData?.map((t: { id: string }) => t.id) || [];
+
+    if (tagIds.length > 0) {
+      const { data: ptData } = await supabase
+        .from('post_tags')
+        .select('post_id')
+        .in('tag_id', tagIds);
+
+      const postIdsFromTags = ptData?.map((pt: { post_id: string }) => pt.post_id) || [];
+      if (postIdsFromTags.length > 0) {
+        query = query.in('id', postIdsFromTags);
+      } else {
+        return [];
+      }
+    } else {
+      return [];
+    }
+  }
 
   if (cleanTerm) {
     const { data: matchedTags } = await supabase
@@ -238,16 +266,26 @@ export async function search(term: string = '', community?: string, tags?: strin
 
   if (error || !data) return [];
 
-  let formattedData: UnifiedPost[] = data.map((post: RawPostRow) => ({
-    ...post,
-    author: post.author || { id: post.author_id, username: 'Anónimo' },
-    community_name: post.communities?.name || 'General',
-    tags: post.post_tags?.map((pt: { tag: { name: string } }) => pt.tag.name) || [],
-    replies: [],
-    links: post.links || [],
-    replies_count: post.replies ? post.replies.length : 0,
-    votes_count: 0
-  }));
+  let formattedData: UnifiedPost[] = data.map((post: RawPostRow) => {
+    let totalVotes = 0;
+    if (post.replies && Array.isArray(post.replies)) {
+      totalVotes = post.replies.reduce((sum: number, r: any) => {
+        const votesList = r.votes || [];
+        return sum + votesList.reduce((vSum: number, v: any) => vSum + (v.value * (v.weight || 1)), 0);
+      }, 0);
+    }
+
+    return {
+      ...post,
+      author: post.author || { id: post.author_id, username: 'Anónimo' },
+      community_name: post.communities?.name || 'General',
+      tags: post.post_tags?.map((pt: { tag: { name: string } }) => pt.tag.name) || [],
+      replies: [],
+      links: post.links || [],
+      replies_count: post.replies ? post.replies.length : 0,
+      votes_count: Math.round(totalVotes)
+    };
+  });
 
   if (filter === 'most_replied' || filter === 'respondidos') {
     formattedData.sort((a, b) => b.replies_count - a.replies_count);
