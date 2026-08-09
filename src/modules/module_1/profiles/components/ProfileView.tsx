@@ -6,14 +6,13 @@ import { toPublicProfile } from '../utils/public-profile'
 import { PersonalDataCard } from './PersonalDataCard'
 import { ProfileHeader } from './ProfileHeader'
 import { ReputationBadge } from './ReputationBadge'
-import { getPostsByUser } from '@/modules/module_3/posts/services/post.service'
-import { PostCard } from '@/modules/module_3/posts/components/PostList'
+import { getUserFeedAction } from '@module_2/feed/actions/feed.actions'
+import { UserFeedSection } from '@module_2/feed/components/user-feed-section'
 
 /**
  * Pantalla de perfil en modo lectura.
  *
  * Server Component: obtiene el perfil y la lista de publicaciones del usuario en el servidor.
- * Reemplaza la sección "Sobre mí" por las publicaciones recientes del usuario.
  */
 export async function ProfileView({ username }: { username?: string }) {
   const currentUser = await getCurrentUser()
@@ -37,8 +36,7 @@ export async function ProfileView({ username }: { username?: string }) {
   const publicProfile = toPublicProfile(profile)
   const isOwnProfile = currentUser?.id === profile.id
 
-  // Obtener las publicaciones del usuario desde el Módulo 3
-  const userPosts = await getPostsByUser(profile.id)
+  const initialFeed = await getUserFeedAction(profile.id)
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] px-4 py-6">
@@ -52,35 +50,16 @@ export async function ProfileView({ username }: { username?: string }) {
           </aside>
 
           <section className="flex flex-col gap-4 lg:col-span-8">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-[#0f2748]">
-                {isOwnProfile ? 'Mis publicaciones' : `Publicaciones de ${profile.username}`}
-              </h2>
-              <span className="text-xs font-semibold text-[#6b7280]">
-                {userPosts.length} {userPosts.length === 1 ? 'publicación' : 'publicaciones'}
-              </span>
-            </div>
+            <h2 className="text-xl font-bold text-[#0f2748]">
+              {isOwnProfile ? 'Mis publicaciones' : `Publicaciones de ${profile.username}`}
+            </h2>
 
-            {userPosts.length === 0 ? (
-              <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-                <p className="font-bold text-[#0f2748]">
-                  {isOwnProfile
-                    ? 'Aún no has realizado ninguna publicación'
-                    : 'Este usuario aún no tiene publicaciones'}
-                </p>
-                <p className="mt-1 text-sm text-[#6b7280]">
-                  {isOwnProfile
-                    ? 'Tus publicaciones aparecerán aquí cuando compartas contenido en la plataforma.'
-                    : ''}
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {userPosts.map((post) => (
-                  <PostCard key={post.id} post={post} currentUserId={currentUser?.id} isCompact />
-                ))}
-              </div>
-            )}
+            <UserFeedSection
+              initialFeed={initialFeed}
+              userId={profile.id}
+              currentUserId={currentUser?.id}
+              isOwnProfile={isOwnProfile}
+            />
           </section>
         </div>
       </div>
