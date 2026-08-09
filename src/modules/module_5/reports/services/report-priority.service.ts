@@ -26,15 +26,30 @@ export function calculateReportScore(report: Report): number {
 }
 
 export async function getPrioritizedReports(): Promise<Report[]> {
-  const supabase = await createClient();
-  const { data: reports, error } = await supabase
-    .from("reports")
-    .select("*")
-    .eq("status", "pending");
+  try {
+    const supabase = await createClient();
+    const { data: reports, error } = await supabase
+      .from("reports")
+      .select("*")
+      .eq("status", "pending");
 
-  if (error) throw new Error(`Failed to fetch reports: ${error.message}`);
+    if (error) throw new Error(`Failed to fetch reports: ${error.message}`);
 
-  return (reports as Report[]).sort((a, b) => 
-    calculateReportScore(b) - calculateReportScore(a)
-  );
+    return (reports as Report[]).sort((a, b) => 
+      calculateReportScore(b) - calculateReportScore(a)
+    );
+  } catch (err) {
+    console.warn("getPrioritizedReports: unable to fetch reports, returning empty list.", err);
+    return [];
+  }
+}
+
+export class ReportPriorityService {
+  public calculateReportScore(report: Report): number {
+    return calculateReportScore(report);
+  }
+
+  public async getPrioritizedReports(): Promise<Report[]> {
+    return getPrioritizedReports();
+  }
 }

@@ -1,1 +1,1 @@
-export { createWarning, getActiveUserWarnings, getUserPostingPermission } from "./services/warning.service";
+export { createWarning, getActiveUserWarnings, getUserPostingPermission, WarningService } from "./services/warning.service";
