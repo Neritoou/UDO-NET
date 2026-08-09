@@ -73,7 +73,6 @@ export default function CreatePostModal({
       });
     }
   }, [isOpen, userNameProp]);
-
   // Debounce para previsualizar metadata de URL
   useEffect(() => {
     const trimmedUrl = urlInput.trim();

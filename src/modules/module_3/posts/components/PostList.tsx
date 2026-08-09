@@ -49,7 +49,6 @@ export function PostCard({
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
   const authorName = post.author?.username || 'Anónimo';
-  const authorCareer = post.author?.bio || 'Carrera';
   const communityBreadcrumb = `F / ${post.community_name || 'General'}`;
   const relativeDate = formatDate(post.created_at);
 
@@ -183,10 +182,6 @@ export function PostCard({
                 />
               </div>
             )}
-
-            <h5 className={`font-candal font-normal text-alpha-black leading-tight m-0 p-0 break-words min-w-0 ${isCompact ? 'text-extra-tiny' : 'text-h5'}`}>
-              {authorCareer}
-            </h5>
           </div>
         </div>
 

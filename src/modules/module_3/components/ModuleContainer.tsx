@@ -9,7 +9,6 @@ import PostList from '@module_3/posts/components/PostList';
 import { UnifiedPost } from '@module_3/posts/services/supabase-service';
 import { CommunityOption } from '@module_3/posts/actions/post';
 import { getThread } from '@module_3/posts/actions/thread';
-
 interface Module3ContentProps {
   initialPosts: UnifiedPost[];
   communities: CommunityOption[];
@@ -19,7 +18,6 @@ function Module3Content({ initialPosts, communities }: Module3ContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const threadParam = searchParams.get('thread') || searchParams.get('post');
-
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
   const [currentThread, setCurrentThread] = useState<UnifiedPost | null>(null);
   const [loadingThread, setLoadingThread] = useState(false);

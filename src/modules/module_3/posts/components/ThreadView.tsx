@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { getThread } from '@module_3/posts/actions/thread';
 import { addReplyAction } from '@module_3/posts/actions/reply';
@@ -289,7 +289,6 @@ export default function ThreadView({ threadId, initialThread, onBack, currentUse
       isMounted = false;
     };
   }, [threadId, initialThread]);
-
   const loadData = async () => {
     setLoading(true);
     const data = await getThread(threadId);

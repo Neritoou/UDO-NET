@@ -29,3 +29,13 @@ export async function updatePostSolvedStatus(post_id: string, is_solved: boolean
 
   if (error) throw new Error(`Failed to update solved status: ${error.message}`);
 }
+
+export class ThreadManagementService {
+  public async updatePostPinStatus(post_id: string, is_pinned: boolean, moderator: User): Promise<void> {
+    return updatePostPinStatus(post_id, is_pinned, moderator);
+  }
+
+  public async updatePostSolvedStatus(post_id: string, is_solved: boolean, moderator: User): Promise<void> {
+    return updatePostSolvedStatus(post_id, is_solved, moderator);
+  }
+}

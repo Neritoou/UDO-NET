@@ -75,3 +75,17 @@ export async function updateReportsStatus(
 
   if (error) throw new Error(`Failed to reject reports: ${error.message}`);
 }
+
+export class ReportActionsService {
+  public async getActiveReportsCount(target_id: string, target_type: TargetType): Promise<number> {
+    return getActiveReportsCount(target_id, target_type);
+  }
+
+  public async updateContentVisibility(target_id: string, target_type: TargetType, moderator: User): Promise<void> {
+    return updateContentVisibility(target_id, target_type, moderator);
+  }
+
+  public async updateReportsStatus(target_id: string, target_type: TargetType, moderator: User): Promise<void> {
+    return updateReportsStatus(target_id, target_type, moderator);
+  }
+}
