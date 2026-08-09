@@ -17,7 +17,7 @@ export function ProfileHeader({
   isOwnProfile: boolean
 }) {
   return (
-    <ProfileBannerUploader isOwnProfile={isOwnProfile}>
+    <ProfileBannerUploader isOwnProfile={isOwnProfile} initialBannerUrl={profile.banner_url}>
       <div className="flex flex-col gap-4 px-6 pb-6 md:flex-row md:items-end md:justify-between">
         <div className="flex flex-col gap-3 md:flex-row md:items-end">
           <ProfileAvatarUploader
