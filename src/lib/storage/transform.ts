@@ -90,6 +90,24 @@ export async function resizeImage(file: File, dimensions: { width: number; heigh
         0, 0, dimensions.width, dimensions.height
       )
 
+      // ****
+      const imageData = ctx.getImageData(0, 0, dimensions.width, dimensions.height)
+      const data = imageData.data
+
+      for (let i = 0; i < data.length; i += 4) {
+        const alpha = data[i + 3]
+
+        if (alpha < 255) {
+          data[i] = 255 
+          data[i + 1] = 255 
+          data[i + 2] = 255
+          data[i + 3] = 255 
+        }
+      }
+
+      ctx.putImageData(imageData, 0, 0)      
+      // ****
+
       canvas.toBlob(
         (blob) => {
           URL.revokeObjectURL(img.src)
