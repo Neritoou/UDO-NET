@@ -194,9 +194,11 @@ export async function joinCommunityAction(communityId: string): Promise<ActionRe
     }
   }
 
-  if (community.parent_id === null) {
+  if (community.parent_id === null && community.slug != "temas-generales") {
     const mainCommunities = await getUserMainCommunities(user.id)
-    if (mainCommunities.length >= MAX_MAIN_COMMUNITIES) {
+    const filterGeneralTopic = mainCommunities.filter(el => el.slug != "temas-generales")
+
+    if (filterGeneralTopic.length >= MAX_MAIN_COMMUNITIES) {
       return { error: `No puedes pertenecer a más de ${MAX_MAIN_COMMUNITIES} carreras.` }
     }
   }
@@ -336,4 +338,18 @@ export async function deleteCommunityBannerAction(communityId: string): Promise<
 
   await revalidateCommunityPath(community)
   return { data: true }
+}
+
+
+export async function removeMemberSubCommunityAction(communityId: string, userId: string): Promise<boolean> {
+  const user = await getCurrentUser()
+  if (!user) return false
+
+  const community = await getCommunityById(communityId)
+  if (!community) return false
+
+  if (!canManageCommunity(community, user?.id, user?.role)) return false
+  leaveCommunity(userId,communityId)
+
+  return true
 }
