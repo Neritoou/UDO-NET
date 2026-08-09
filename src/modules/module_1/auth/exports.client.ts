@@ -14,13 +14,7 @@ export { LogoutButton } from './components/LogoutButton'
 export { AuthSkeleton } from './components/AuthSkeleton'
 
 // --- Server Actions (Next.js las convierte en referencias en el cliente) ---
-export {
-  loginAction,
-  registerAction,
-  logoutAction,
-  requestPasswordResetAction,
-  updatePasswordAction,
-} from './actions/auth.actions'
+export { loginWithGoogleAction, logoutAction } from './actions/auth.actions'
 
 // --- Roles (constantes y funciones puras) ---
 export {
@@ -34,4 +28,4 @@ export {
 
 // --- Tipos ---
 export type { User, UserRole } from '@/lib/types'
-export type { AuthFormState, AuthField } from './types'
+export type { AuthFormState } from './types'
