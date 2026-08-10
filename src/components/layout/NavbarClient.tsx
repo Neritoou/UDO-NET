@@ -18,6 +18,7 @@ export function NavbarClient({
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
+  // Cerrar menú al click fuera
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -30,21 +31,19 @@ export function NavbarClient({
 
   return (
     <>
-      {/* Espaciador para empujar acciones a la derecha */}
-      <div className="flex-1" />
-
       {/* Acciones del usuario */}
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 ml-auto z-10">
+
         {user ? (
           <>
-            {/* NotificationDropdown del Módulo 4 */}
+            {/* Notificaciones */}
             <NotificationDropdown initialNotifications={initialNotifications} />
 
-            {/* Avatar con menú — UserAvatar y LogoutButton del Módulo 1 */}
+            {/* Avatar con menú */}
             <div ref={menuRef} className="relative">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="rounded-full transition hover:ring-2 hover:ring-main-blue"
+                className="rounded-full transition hover:ring-2 hover:ring-main-blue border-0 bg-transparent cursor-pointer"
               >
                 <UserAvatar avatarUrl={user.avatar_url} username={user.username} size="sm" />
               </button>

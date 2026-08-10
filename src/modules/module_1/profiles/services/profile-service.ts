@@ -14,7 +14,7 @@ import type { ProfileInput, ProfileUpdate } from '../types'
  */
 
 /** Columnas del perfil. Se listan explícitamente para no exponer campos nuevos sin querer. */
-const PROFILE_COLUMNS = 'id, email, username, avatar_url, bio, is_public, role, reputation, created_at'
+const PROFILE_COLUMNS = 'id, email, username, avatar_url, banner_url, bio, is_public, role, reputation, created_at'
 
 /** Obtiene el perfil de un usuario por su id. */
 export async function getUserProfile(userId: string): Promise<User | null> {
@@ -135,12 +135,35 @@ export async function updateUserProfile(
   return data
 }
 
+/** Elimina la fila del usuario. CASCADE borra posts, replies, votes, etc. */
+export async function deleteUserProfile(userId: string): Promise<boolean> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', userId)
+  console.log(error)
+  return !error
+}
+ 
+
 /** Guarda la URL del avatar del usuario. Se pasa `null` para volver al avatar por defecto. */
 export async function updateAvatarUrl(userId: string, avatarUrl: string | null): Promise<boolean> {
   const supabase = await createClient()
   const { error } = await supabase
     .from('users')
     .update({ avatar_url: avatarUrl })
+    .eq('id', userId)
+
+  return !error
+}
+
+/** Guarda la URL de la portada del usuario. `null` restaura la portada por defecto. */
+export async function updateBannerUrl(userId: string, bannerUrl: string | null): Promise<boolean> {
+  const supabase = await createClient()
+  const { error } = await supabase
+    .from('users')
+    .update({ banner_url: bannerUrl })
     .eq('id', userId)
 
   return !error

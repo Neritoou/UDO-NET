@@ -22,6 +22,13 @@ interface UserBadgeProps {
  */
 export default function UserBadge({ reputation, role }: UserBadgeProps) {
   const getBadgeConfig = (): { label: string; bgClass: string } => {
+    if (role === 'admin') {
+      return {
+        label: 'Administrador',
+        bgClass: 'bg-purple-600',
+      };
+    }
+
     if (role === 'moderator') {
       return {
         label: 'Profesor/Moderador',

@@ -10,11 +10,9 @@ import {
 import { GetSubcommunitiesSC } from "@module_2/communities/components/get-communities-svr";
 import JoinCommunityComponent from "@module_2/communities/components/button-join";
 import LeaveCommunityComponent from "@module_2/communities/components/button-leave";
-
-import { getCommunityFeedAction } from "@/modules/module_2/feed/actions/feed.actions";
-import CommunityFeed from "@/modules/module_2/feed/components/community-feed";
-import CreatePostButton from "@/modules/module_2/feed/components/create-post-button";
 import EditSubcommunity from "@/modules/module_2/communities/components/button-edit";
+import { CommunityFeedSection } from "@/modules/module_2/feed/components/community-feed-section";
+import { getFeedAction } from "@module_2/feed/actions/feed.actions";
 
 import { getCurrentUserId } from "@module_1/auth/exports";
 import Image from "next/image";
@@ -38,10 +36,10 @@ export default async function CommunityPage({ params }: PageProps) {
 
     const currentUserId = await getCurrentUserId();
 
-    const [memberCount, subscribed, posts, currentUsers, userRole] = await Promise.all([
+    const [memberCount, subscribed, initialFeed, currentUsers, userRole] = await Promise.all([
         getCommunityMemberCount(community.id),
         currentUserId ? isUserSubscribed(currentUserId, community.id) : Promise.resolve(false),
-        getCommunityFeedAction(community.id),
+        getFeedAction(community.id),
         getCommunityMembers(community.id),
         currentUserId ? getUserRole(currentUserId) : Promise.resolve(null)
     ]);
@@ -54,6 +52,7 @@ export default async function CommunityPage({ params }: PageProps) {
 
                 <div className="relative h-40 sm:h-52 -mx-4 sm:mx-0">
                     <div className={`relative h-full w-full rounded-b-xl sm:rounded-xl overflow-hidden bg-gradient-to-r ${selectedGradient}`}>
+                        <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
                         {community.banner_url && (
                         <Image
                             src={community.banner_url}
@@ -67,26 +66,23 @@ export default async function CommunityPage({ params }: PageProps) {
                     </div>
                     
                     <div className="relative px-5">
-                        <div className="absolute -top-7 flex items-center gap-3">
+                        <div className="absolute -top-10 flex items-center gap-3">
                         {community.icon_url 
                         ?
                             <Image
                             src={community.icon_url}
                             alt={community.name}
-                            width={80}
-                            height={80}
-                            className="object-cover rounded-full border-4 object-cover border-pure-white"
+                            width={96}
+                            height={96}
+                            className="object-cover rounded-full border-4 border-pure-white w-20 h-20 sm:w-24 sm:h-24"
                             />
                         :
-                        <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 text-lg font-bold text-white sm:h-16 sm:w-16 sm:text-xl border-pure-white bg-main-blue">
+                        <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 text-xl font-bold text-white sm:h-24 sm:w-24 sm:text-2xl border-pure-white bg-main-blue">
                             {community.name.charAt(0).toUpperCase()}
                         </div>
                         }
-
                         </div>
                     </div>
-
-
 
                 </div>
 
@@ -109,21 +105,24 @@ export default async function CommunityPage({ params }: PageProps) {
                         <JoinCommunityComponent communityId={community.id} />
                     )}
 
-                    <CreatePostButton communityId={community.id} disabled={!subscribed} />
-
-                    
                     {canManage && (
                         <EditSubcommunity community={community} />
                     )}
 
-                    <ShowMembers memberCount={memberCount} currentUsers={currentUsers} communityName={community.name} />
+                    <ShowMembers memberCount={memberCount} currentUsers={currentUsers} communityName={community.name} communityId={community.id} subscribed={subscribed} />
                 </div>
             </section>
 
             <div className="mt-8 grid grid-cols-12 lg:gap-8 gap-4">
 
             <section className="col-span-12 lg:col-span-8">
-                <CommunityFeed posts={posts} currentUserId={currentUserId} />
+                <CommunityFeedSection
+                    initialFeed={initialFeed}
+                    communityId={community.id}
+                    currentUserId={currentUserId}
+                    canCreate={subscribed}
+                    searchPlaceholder={`Buscar publicaciones...`}
+                />
             </section>
 
             <aside className="lg:col-span-4">

@@ -2,9 +2,10 @@ import {
   createUserProfile,
   getUserProfile,
   isUsernameTaken,
-  updateUserProfile,
+  updateAvatarUrl,
 } from '../../profiles/services/profile-service'
-import { clearPendingUsername, getAuthIdentity } from './auth-service'
+import { exchangeCodeForSession, getAuthIdentity } from './auth-service'
+import { getCommunityBySlug, joinCommunity } from '@module_2/communities/exports'
 import type { User } from '@/lib/types'
 
 /**
@@ -40,6 +41,33 @@ export async function isAuthenticated(): Promise<boolean> {
 }
 
 /**
+ * Cierra el ciclo de OAuth: canjea el código de Google por una sesión y deja
+ * al usuario con su perfil del foro listo.
+ *
+ * Devuelve `null` si todo salió bien, o el mensaje que hay que mostrarle.
+ * La llama el Route Handler `/auth/callback`, único sitio donde se pueden
+ * escribir las cookies de sesión al volver desde Google.
+ */
+export async function completeGoogleSignIn(code: string): Promise<{ error: string } | null> {
+  const exchange = await exchangeCodeForSession(code)
+  if (exchange) return exchange
+
+  const identity = await getAuthIdentity()
+  if (!identity) {
+    return { error: 'No se pudo abrir la sesión con Google. Inténtalo de nuevo.' }
+  }
+
+  const profile = await ensureUserProfile(identity.id, identity.email, identity.avatarUrl)
+  if (!profile) {
+    return {
+      error: 'Entraste con Google, pero no se pudo crear tu perfil. Contacta a un administrador.',
+    }
+  }
+
+  return null
+}
+
+/**
  * Genera un nombre de usuario libre a partir del correo.
  *
  * Se añade un sufijo numérico creciente porque `users.username` es UNIQUE y el
@@ -69,64 +97,37 @@ async function generateAvailableUsername(email: string): Promise<string> {
 /**
  * Garantiza que el usuario autenticado tenga fila en la tabla `users`.
  *
- * Hace falta para cuentas creadas antes de este módulo o registradas desde el
- * panel de Supabase, que existen en Auth pero no tienen perfil en el foro.
+ * Con Google no hay formulario de registro: la primera vez que alguien entra,
+ * su perfil se crea aquí con un nombre derivado del correo, que después puede
+ * cambiar desde la edición de perfil.
  */
-export async function ensureUserProfile(
-  userId: string,
-  email: string,
-  preferredUsername?: string
-): Promise<User | null> {
+export async function ensureUserProfile(userId: string, email: string, googleAvatarUrl?: string | null): Promise<User | null> {
   const existing = await getUserProfile(userId)
+  if (existing) return applyGoogleAvatar(existing, googleAvatarUrl)
 
-  if (existing) return applyPendingUsername(existing, preferredUsername)
+  const username = await generateAvailableUsername(email)
 
-  const isPreferredFree =
-    preferredUsername !== undefined && (await isUsernameTaken(preferredUsername)) === false
+  const created = await createUserProfile({ id: userId, email, username })
+  if (!created) return null
 
-  const username = isPreferredFree
-    ? (preferredUsername as string)
-    : await generateAvailableUsername(email)
+  // Auto-suscribir a Temas Generales
+  const temasGenerales = await getCommunityBySlug('temas-generales')
+  if (temasGenerales) {
+    await joinCommunity(created.id, temasGenerales.id)
+  }
 
-  return createUserProfile({ id: userId, email, username })
+  return applyGoogleAvatar(created, googleAvatarUrl)
 }
 
 /**
- * Aplica al perfil el nombre que el usuario eligió al registrarse.
+ * Copia la foto de Google al perfil, pero solo si todavía no tiene ninguna.
  *
- * Hace falta cuando el proyecto de Supabase tiene un trigger que crea la fila
- * de `users` con un nombre generado: en ese caso el nombre del formulario se
- * quedó guardado en los metadatos de Auth y se traslada aquí, en cuanto hay
- * sesión para poder escribir en la tabla.
+ * Nunca pisa un avatar subido por el usuario: si lo cambió desde su perfil, esa
+ * elección manda sobre la foto de la cuenta de Google.
  */
-async function applyPendingUsername(
-  profile: User,
-  preferredUsername?: string
-): Promise<User> {
-  const identity = await getAuthIdentity()
+async function applyGoogleAvatar(profile: User, googleAvatarUrl?: string | null): Promise<User> {
+  if (!googleAvatarUrl || profile.avatar_url) return profile
 
-  // Sin sesión no se puede escribir: el rename se hará al iniciar sesión.
-  if (!identity || identity.id !== profile.id) return profile
-
-  const desired = preferredUsername ?? identity.pendingUsername
-  if (!desired || desired === profile.username) {
-    if (identity.pendingUsername) await clearPendingUsername()
-    return profile
-  }
-
-  // Solo se renombra si consta que el nombre está libre; con `null` (consulta
-  // fallida) se deja el pendiente para reintentarlo en la siguiente sesión.
-  const desiredTaken = await isUsernameTaken(desired, profile.id)
-  if (desiredTaken === null) return profile
-
-  if (desiredTaken) {
-    await clearPendingUsername()
-    return profile
-  }
-
-  const renamed = await updateUserProfile(profile.id, { username: desired })
-  if (!renamed) return profile
-
-  await clearPendingUsername()
-  return renamed
+  const saved = await updateAvatarUrl(profile.id, googleAvatarUrl)
+  return saved ? { ...profile, avatar_url: googleAvatarUrl } : profile
 }

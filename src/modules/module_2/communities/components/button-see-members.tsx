@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from "react"
-import MembersCommunity from "./get-users-profile";
+import MembersCommunity from "@module_2/communities/components/get-users-profile";
 
 import type { User } from '@/lib/types';
 
-export default function ShowMembers({ memberCount, currentUsers, communityName }:{ memberCount:number, currentUsers:User[], communityName:string }){
+export default function ShowMembers({ memberCount, currentUsers, communityName, communityId, subscribed }:{ memberCount:number, currentUsers:User[], communityName:string, communityId:string, subscribed:boolean }){
     const [isOpen, setIsOpen] = useState<boolean>(false);
 
     return (
@@ -17,7 +17,7 @@ export default function ShowMembers({ memberCount, currentUsers, communityName }
                 </span>
             </button>
 
-            <MembersCommunity currentUsers={currentUsers} isOpen={isOpen} setIsOpen={setIsOpen} communityName={communityName} />
+            <MembersCommunity currentUsers={currentUsers} isOpen={isOpen} setIsOpen={setIsOpen} communityName={communityName} communityId={communityId} subscribed={subscribed} />
         </>
     );
 };

@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { createPost, getPosts, getPostsByUser, UnifiedPost } from "@module_3/posts/services/post.service";
 import { getLinkMetadata } from "./links";
-import {
-  getUserMainCommunities,
-  isUserSubscribed
+import { 
+  getUserMainCommunities, 
+  getCommunityBySlug,
+  isUserSubscribed 
 } from "@module_2/communities/exports";
 import { getCurrentUser, getCurrentUserId } from "@module_1/auth/exports";
 
@@ -32,14 +33,28 @@ export async function getUserJoinedCommunitiesAction(): Promise<CommunityOption[
     if (!currentUserId) return []
 
     const mainCommunities = await getUserMainCommunities(currentUserId)
-
     const allCommunities: CommunityOption[] = []
 
-    for (const main of mainCommunities) {
+    for (const main of mainCommunities || []) {
       allCommunities.push({ id: main.id, name: main.name })
-      const subs = await getUserSubcommunities(currentUserId, main.id)
-      for (const sub of subs) {
-        allCommunities.push({ id: sub.id, name: `${main.name} / ${sub.name}` })
+      try {
+        const subs = await getUserSubcommunities(currentUserId, main.id)
+        for (const sub of subs || []) {
+          allCommunities.push({ id: sub.id, name: `${sub.name}(${main.name})` })
+        }
+      } catch {
+        // subcommunity fetch ignore
+      }
+    }
+
+    if (allCommunities.length === 0) {
+      try {
+        const generalCommunity = await getCommunityBySlug("temas-generales");
+        if (generalCommunity) {
+          return [{ id: generalCommunity.id, name: generalCommunity.name }];
+        }
+      } catch {
+        // fallback ignore
       }
     }
 
@@ -160,8 +175,9 @@ export async function createPostAction(formData: FormData | {
     });
 
     if (result.success) {
-      revalidatePath("/");
+      revalidatePath("/", "layout");
     }
+    
     return result;
   } catch (error) {
     return { success: false, error: "Error interno al conectar con la base de datos." };

@@ -45,12 +45,11 @@ export async function addReplyAction(postId: string, parentId: string | null, co
 
                 if (!error && usersData) {
                     for (const user of usersData) {
-                        await createNotification(user.id, 'reply', postId);
+                        await createNotification(user.id, 'mention', postId);
                     }
                 }
             }
-
-            revalidatePath("/");
+            revalidatePath('/', 'layout');
         }
         return result;
     } catch (error) {

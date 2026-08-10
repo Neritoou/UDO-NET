@@ -31,3 +31,35 @@ export async function getUserReputation(userId: string): Promise<number> {
     return 0;
   }
 }
+
+/**
+ * Incrementa o decrementa los puntos de reputación de un usuario.
+ *
+ * Utiliza la función almacenada `increment_reputation` de PostgreSQL (SECURITY DEFINER)
+ * para actualizar atomicamente tanto `public.users.reputation` como `public.reputation`.
+ *
+ * @param userId - UUID del usuario al que se le ajustará la reputación.
+ * @param deltaPoints - Cantidad de puntos a sumar (positivo) o restar (negativo).
+ */
+export async function updateUserReputation(userId: string, deltaPoints: number): Promise<boolean> {
+  if (deltaPoints === 0 || !userId) return true;
+
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase.rpc('increment_reputation', {
+      target_user_id: userId,
+      delta_points: deltaPoints,
+    });
+
+    if (error) {
+      console.error('Error al actualizar la reputación del usuario:', error.message);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error('Excepción al actualizar reputación:', err);
+    return false;
+  }
+}

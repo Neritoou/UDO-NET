@@ -24,8 +24,8 @@ export async function calculateWeight(userId: string): Promise<number> {
       return 1.0;
     }
 
-    // Moderadores o usuarios con alta reputación obtienen peso doble
-    if (user.role === 'moderator' || user.reputation > 1000) {
+    // Moderadores, administradores o usuarios con alta reputación obtienen peso doble (2.0)
+    if (user.role === 'moderator' || user.role === 'admin' || (user.reputation && user.reputation > 1000)) {
       return 2.0;
     }
 

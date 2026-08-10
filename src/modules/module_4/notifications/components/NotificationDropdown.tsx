@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useCallback, useTransition, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import type { Notification } from '@/lib/types/notification';
 import NotificationItem from './NotificationItem';
-import { markNotificationsAsRead } from '@/modules/module_4/notifications/actions/notifications.actions';
+import { markNotificationsAsRead, getUserNotificationsAction } from '@/modules/module_4/notifications/actions/notifications.actions';
 
 /**
  * Props del componente NotificationDropdown.
@@ -27,8 +28,13 @@ interface NotificationDropdownProps {
  * desde un componente padre de tipo Server Component. Las interacciones del usuario
  * (marcar como leída) se manejan mediante una Server Action dedicada, con actualizaciones
  * optimistas del estado local para garantizar una respuesta inmediata en la UI.
+ *
+ * Además, hace polling cada 15s (Server Action `getUserNotificationsAction`) para
+ * detectar notificaciones nuevas sin depender de revalidatePath ni de que el usuario
+ * navegue de ruta.
  */
 export default function NotificationDropdown({ initialNotifications }: NotificationDropdownProps) {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [isPending, startTransition] = useTransition();
@@ -106,31 +112,47 @@ export default function NotificationDropdown({ initialNotifications }: Notificat
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  /**
+   * Refresca las notificaciones cada 15s mediante polling.
+   * No pisa el estado si el dropdown está abierto, para no perder la selección del usuario a mitad de lectura.
+   */
+  React.useEffect(() => {
+    const interval = setInterval(async () => {
+      if (isOpen) return;
+      const fresh = await getUserNotificationsAction(20);
+      setNotifications(fresh);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
   return (
     <div ref={dropdownRef} className="relative">
-      {/* Botón de campana con badge de notificaciones no leídas */}
+      {/* Botón de campana idéntico a la imagen de referencia */}
       <button
         onClick={toggleDropdown}
-        className="relative flex h-10 w-10 items-center justify-center rounded-2xl text-gray-600 transition-all duration-200 hover:bg-blue-100 hover:text-blue-600"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#EEEEEE] text-main-black transition-all duration-200 hover:bg-gray-300 border-0 cursor-pointer"
         aria-label={`Notificaciones${unreadCount > 0 ? ` (${unreadCount} sin leer)` : ''}`}
       >
-        {/* Ícono SVG de campana */}
+        {/* Ícono SVG de campana (outline) */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
+          fill="none"
           viewBox="0 0 24 24"
-          fill="currentColor"
-          className="h-6 w-6"
+          strokeWidth={2}
+          stroke="currentColor"
+          className="h-5 w-5 text-main-black"
         >
           <path
-            fillRule="evenodd"
-            d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.52a.75.75 0 01-.297 1.206c-1.544.57-3.16.99-4.831 1.243a3.75 3.75 0 11-7.48 0 24.585 24.585 0 01-4.831-1.244.75.75 0 01-.298-1.205A8.217 8.217 0 005.25 9.75V9zm4.502 8.9a2.25 2.25 0 004.496 0 25.057 25.057 0 01-4.496 0z"
-            clipRule="evenodd"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
           />
         </svg>
 
-        {/* Badge de conteo de no leídas */}
+        {/* Badge de conteo de no leídas (círculo naranja arriba a la derecha con número) */}
         {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white ring-2 ring-white">
+          <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-[#D9531E] text-[11px] font-extrabold leading-none text-white ring-2 ring-white shadow-xs select-none">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -166,6 +188,10 @@ export default function NotificationDropdown({ initialNotifications }: Notificat
                   key={notification.id}
                   notification={notification}
                   onMarkRead={handleMarkSingleRead}
+                  onNavigate={(targetPostId) => {
+                    setIsOpen(false);
+                    router.push(`/?thread=${targetPostId}`);
+                  }}
                 />
               ))
             )}

@@ -53,7 +53,11 @@ export default function VoteManager({
     setCurrentVote(initialUserVote);
   }, [initialVoteCount, initialUserVote]);
 
-  const isAuthor = currentSessionUserId === replyAuthorId;
+  const isAuthor = Boolean(
+    currentSessionUserId &&
+    replyAuthorId &&
+    currentSessionUserId.trim().toLowerCase() === replyAuthorId.trim().toLowerCase()
+  );
 
   const showToast = useCallback((message: string, type: 'error' | 'success') => {
     setToast({ message, type });
@@ -61,7 +65,12 @@ export default function VoteManager({
   }, []);
 
   const handleVote = async (value: 1 | -1) => {
-    if (isAuthor || isLoading) return;
+    if (isAuthor || isLoading) {
+      if (isAuthor) {
+        showToast('No puedes votar tu propio contenido.', 'error');
+      }
+      return;
+    }
 
     const previousVoteCount = voteCount;
     const previousVote = currentVote;
@@ -105,13 +114,15 @@ export default function VoteManager({
 
   return (
     <div className="inline-flex items-center gap-3">
-      {/* Botón Upvote con SVG del Grupo 3 */}
+      {/* Botón Upvote con SVG */}
       <button
         type="button"
         onClick={() => handleVote(1)}
         disabled={isAuthor || isLoading}
         className={`p-0 border-0 bg-transparent transition-transform ${
-          isAuthor ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-105'
+          isAuthor || isLoading
+            ? 'cursor-not-allowed opacity-50'
+            : 'cursor-pointer hover:scale-105'
         }`}
         title={isAuthor ? 'No puedes votar tu propio contenido' : 'Votar positivo'}
         aria-label="Upvote"
@@ -124,13 +135,15 @@ export default function VoteManager({
         {voteCount}
       </span>
 
-      {/* Botón Downvote con SVG del Grupo 3 */}
+      {/* Botón Downvote con SVG */}
       <button
         type="button"
         onClick={() => handleVote(-1)}
         disabled={isAuthor || isLoading}
         className={`p-0 border-0 bg-transparent transition-transform ${
-          isAuthor ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:scale-105'
+          isAuthor || isLoading
+            ? 'cursor-not-allowed opacity-50'
+            : 'cursor-pointer hover:scale-105'
         }`}
         title={isAuthor ? 'No puedes votar tu propio contenido' : 'Votar negativo'}
         aria-label="Downvote"

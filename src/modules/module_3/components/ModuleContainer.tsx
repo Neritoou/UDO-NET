@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { CreatePostProvider } from '@module_3/posts/exports';
 import SearchBox from "@module_3/search/components/SearchBox";
 import ThreadView from '@module_3/posts/components/ThreadView';
@@ -8,13 +9,15 @@ import PostList from '@module_3/posts/components/PostList';
 import { UnifiedPost } from '@module_3/posts/services/supabase-service';
 import { CommunityOption } from '@module_3/posts/actions/post';
 import { getThread } from '@module_3/posts/actions/thread';
-
 interface Module3ContentProps {
   initialPosts: UnifiedPost[];
   communities: CommunityOption[];
 }
 
 function Module3Content({ initialPosts, communities }: Module3ContentProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const threadParam = searchParams.get('thread') || searchParams.get('post');
   const [selectedThread, setSelectedThread] = useState<string | null>(null);
   const [currentThread, setCurrentThread] = useState<UnifiedPost | null>(null);
   const [loadingThread, setLoadingThread] = useState(false);
@@ -27,9 +30,18 @@ function Module3Content({ initialPosts, communities }: Module3ContentProps) {
     setLoadingThread(false);
   };
 
+  useEffect(() => {
+    if (threadParam) {
+      openThread(threadParam);
+    }
+  }, [threadParam]);
+
   const closeThread = () => {
     setSelectedThread(null);
     setCurrentThread(null);
+    if (threadParam) {
+      router.push('/');
+    }
   };
 
   return (
