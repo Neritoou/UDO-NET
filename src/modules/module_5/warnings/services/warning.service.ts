@@ -47,3 +47,17 @@ export async function getUserPostingPermission(userId: string): Promise<boolean>
   const activeWarnings = await getActiveUserWarnings(userId);
   return activeWarnings.length < WARNING_LIMIT;
 }
+
+export class WarningService {
+  public async createWarning(userId: string, moderator: User, type: string, reason: string, expiresAt: string): Promise<void> {
+    return createWarning(userId, moderator, type, reason, expiresAt);
+  }
+
+  public async getActiveUserWarnings(userId: string): Promise<Warning[]> {
+    return getActiveUserWarnings(userId);
+  }
+
+  public async getUserPostingPermission(userId: string): Promise<boolean> {
+    return getUserPostingPermission(userId);
+  }
+}

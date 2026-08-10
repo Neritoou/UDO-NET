@@ -92,7 +92,6 @@ export async function getThread(id: string): Promise<UnifiedPost | null> {
       votes: votesList
     };
   });
-
   const post: UnifiedPost = {
     ...data,
     community_name: data.communities?.name || 'General',
@@ -238,7 +237,6 @@ export async function search(term: string = '', community?: string, tags?: strin
       return [];
     }
   }
-
   if (cleanTerm) {
     const { data: matchedTags } = await supabase
       .from('tags')
