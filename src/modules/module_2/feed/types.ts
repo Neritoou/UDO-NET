@@ -1,4 +1,4 @@
-/** Post tal como se muestra en el feed — sin replies ni votes individuales. */
+/** Post tal como se muestra en el feed */
 export type FeedPost = {
   id: string
   title: string
@@ -17,16 +17,17 @@ export type FeedPost = {
     avatar_url: string | null
   }
   tags: string[]
+  links: { id: string; url: string; title: string | null; description: string | null; image_url: string | null; created_at: string }[]
   replies_count: number
 }
- 
+
 /** Resultado paginado del feed. */
 export type PaginatedFeed = {
   posts: FeedPost[]
   nextCursor: string | null
   hasMore: boolean
 }
- 
+
 /** Filtros aplicables al feed. */
 export type FeedFilter = {
   /** Orden: hot (default), new, most_replied */
