@@ -1,12 +1,10 @@
-import type { Metadata } from 'next'
-import { RegisterView } from '@module_1/auth/components/RegisterView'
+import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Crear cuenta | UdoNET',
-  description: 'Regístrate en UdoNET y únete a la comunidad de la UDO.',
-}
-
-/** Página de registro. Solo renderiza el componente del Módulo 1. */
+/**
+ * El registro por separado ya no existe: con Google la cuenta se crea sola la
+ * primera vez que alguien entra. La ruta se conserva para que los enlaces y
+ * marcadores antiguos no den 404.
+ */
 export default function RegisterPage() {
-  return <RegisterView />
+  redirect('/login')
 }
