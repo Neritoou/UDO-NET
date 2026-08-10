@@ -7,3 +7,4 @@ export { markNotificationsAsRead } from './actions/notifications.actions'
 // --- Componentes ---
 export { default as NotificationDropdown } from './components/NotificationDropdown'
 export { default as NotificationItem } from './components/NotificationItem'
+export { default as NotificationView } from './components/NotificationView'
