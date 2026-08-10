@@ -1,18 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import { FeedContainer } from './feed-container'
+import { FeedToolbar } from './feed-toolbar'
 import { getFeedAction } from '../actions/feed.actions'
 import { PostCard } from '@module_3/posts/components/PostList'
 import { ThreadView } from '@module_3/exports'
 import { getThread } from '@module_3/posts/actions/thread'
-import type { FeedPost, PaginatedFeed } from '../types'
+import type { FeedPost, PaginatedFeed, FeedFilter } from '../types'
 import type { UnifiedPost } from '@module_3/posts/services/supabase-service'
 
 interface CommunityFeedSectionProps {
   initialFeed: PaginatedFeed
   communityId?: string | null
   currentUserId?: string | null
+  /** Si el usuario puede crear hilos en esta comunidad. */
+  canCreate?: boolean
+  /** Placeholder para el buscador. */
+  searchPlaceholder?: string
 }
 
 /** Convierte FeedPost a UnifiedPost para PostCard. */
@@ -39,25 +44,35 @@ function toUnifiedPost(post: FeedPost): UnifiedPost {
       avatar_url: post.author.avatar_url,
     },
     tags: post.tags,
+    links: post.links.map((l) => ({ ...l, post_id: post.id })),
     replies: [],
-    links: [],
     replies_count: post.replies_count,
     votes_count: 0,
   }
 }
 
-/**
- * Sección del feed para comunidades y subcomunidades.
- *
- * Sin filtros — las comunidades muestran el feed rankeado por hot score.
- */
+/** Sección del feed para comunidades y subcomunidades. */
 export function CommunityFeedSection({
   initialFeed,
   communityId,
   currentUserId,
+  canCreate = false,
+  searchPlaceholder = 'Buscar en esta comunidad...',
 }: CommunityFeedSectionProps) {
+  const [feed, setFeed] = useState<PaginatedFeed>(initialFeed)
+  const [currentFilter, setCurrentFilter] = useState<FeedFilter>({})
+  const [isFiltering, startFiltering] = useTransition()
+
   const [selectedThread, setSelectedThread] = useState<UnifiedPost | null>(null)
   const [loadingThread, setLoadingThread] = useState(false)
+
+  const handleFilterChange = (filter: FeedFilter) => {
+    setCurrentFilter(filter)
+    startFiltering(async () => {
+      const result = await getFeedAction(communityId, null, filter)
+      setFeed(result)
+    })
+  }
 
   const openThread = async (id: string) => {
     setLoadingThread(true)
@@ -89,16 +104,36 @@ export function CommunityFeedSection({
   }
 
   return (
-    <FeedContainer
-      initialData={initialFeed}
-      loadMoreAction={(cursor) => getFeedAction(communityId, cursor)}
-      renderPost={(post) => (
-        <PostCard
-          post={toUnifiedPost(post)}
-          onSelectPost={openThread}
-          currentUserId={currentUserId}
+    <div className="space-y-4">
+      <FeedToolbar
+        onFilterChange={handleFilterChange}
+        showCreateButton={canCreate}
+        searchPlaceholder={searchPlaceholder}
+      />
+
+      {isFiltering ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 border-3 border-regular-blue border-t-transparent rounded-full animate-spin" />
+            <span className="font-candal text-tiny text-gray-custom">
+              Filtrando publicaciones...
+            </span>
+          </div>
+        </div>
+      ) : (
+        <FeedContainer
+          key={JSON.stringify(currentFilter)}
+          initialData={feed}
+          loadMoreAction={(cursor) => getFeedAction(communityId, cursor, currentFilter)}
+          renderPost={(post) => (
+            <PostCard
+              post={toUnifiedPost(post)}
+              onSelectPost={openThread}
+              currentUserId={currentUserId}
+            />
+          )}
         />
       )}
-    />
+    </div>
   )
 }
