@@ -5,6 +5,7 @@ import {
   updateAvatarUrl,
 } from '../../profiles/services/profile-service'
 import { exchangeCodeForSession, getAuthIdentity } from './auth-service'
+import { getCommunityBySlug, joinCommunity } from '@module_2/communities/exports'
 import type { User } from '@/lib/types'
 
 /**
@@ -100,17 +101,20 @@ async function generateAvailableUsername(email: string): Promise<string> {
  * su perfil se crea aquí con un nombre derivado del correo, que después puede
  * cambiar desde la edición de perfil.
  */
-export async function ensureUserProfile(
-  userId: string,
-  email: string,
-  googleAvatarUrl?: string | null
-): Promise<User | null> {
+export async function ensureUserProfile(userId: string, email: string, googleAvatarUrl?: string | null): Promise<User | null> {
   const existing = await getUserProfile(userId)
   if (existing) return applyGoogleAvatar(existing, googleAvatarUrl)
 
   const username = await generateAvailableUsername(email)
+
   const created = await createUserProfile({ id: userId, email, username })
   if (!created) return null
+
+  // Auto-suscribir a Temas Generales
+  const temasGenerales = await getCommunityBySlug('temas-generales')
+  if (temasGenerales) {
+    await joinCommunity(created.id, temasGenerales.id)
+  }
 
   return applyGoogleAvatar(created, googleAvatarUrl)
 }
