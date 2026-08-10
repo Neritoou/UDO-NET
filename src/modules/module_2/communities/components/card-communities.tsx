@@ -3,11 +3,12 @@ import { formatDate } from "@/lib/utils/formatDate";
 import Link from "next/link";
 import Image from "next/image";
 import { gradients } from "@/lib/constants/communities";
+import { getUserProfile } from "@/modules/module_1/profiles/exports";
 
-
-export function CardCommunities({ item, basePath = "/communities" }: { item: Community; basePath?: string }){
+export async function CardCommunities({ item, basePath = "/communities" }: { item: Community; basePath?: string }){
     const gradientIndex:number = item.name.length % gradients.length;
     const selectedGradient:string = gradients[gradientIndex];
+    const creator = await getUserProfile(item.created_by ? item.created_by : "");
 
     return(
         <Link 
@@ -55,7 +56,7 @@ export function CardCommunities({ item, basePath = "/communities" }: { item: Com
                         {item.parent_id != null && (
                             <div className="flex flex-col text-xs pt-6">
                                 <span className="font-semibold text-main-black">
-                                    Creado por un miembro
+                                    {`Creado por ${creator == null ? "Usuario ya no existente" : creator.username}`}
                                 </span>
                                 <span className="text-gray-custom">
                                     {formatDate(item.created_at)}

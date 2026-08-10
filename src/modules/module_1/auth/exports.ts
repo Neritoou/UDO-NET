@@ -16,25 +16,17 @@ export {
   ensureUserProfile,
 } from './services/session-service'
 
-// --- Recuperación de contraseña ---
-// `verifyRecoveryToken` la consume el Route Handler que atiende el enlace del
-// correo: es la única parte de Next.js que puede escribir la cookie de sesión.
-export { verifyRecoveryToken } from './services/auth-service'
+// --- Acceso con Google ---
+// `completeGoogleSignIn` la consume el Route Handler que atiende el retorno
+// desde Google: es la única parte de Next.js que puede escribir la cookie de
+// sesión al canjear el código.
+export { completeGoogleSignIn } from './services/session-service'
 
 // --- Server Actions ---
-export {
-  loginAction,
-  registerAction,
-  logoutAction,
-  requestPasswordResetAction,
-  updatePasswordAction,
-} from './actions/auth.actions'
+export { loginWithGoogleAction, logoutAction } from './actions/auth.actions'
 
 // --- Componentes ---
 export { LoginView } from './components/LoginView'
-export { RegisterView } from './components/RegisterView'
-export { ForgotPasswordView } from './components/ForgotPasswordView'
-export { UpdatePasswordView } from './components/UpdatePasswordView'
 export { LogoutButton } from './components/LogoutButton'
 export { AuthSkeleton } from './components/AuthSkeleton'
 
@@ -50,4 +42,4 @@ export {
 
 // --- Tipos ---
 export type { User, UserRole } from '@/lib/types'
-export type { AuthFormState, AuthField } from './types'
+export type { AuthFormState } from './types'

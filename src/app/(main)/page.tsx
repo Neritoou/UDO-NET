@@ -1,23 +1,25 @@
-import { CreatePostProvider, getPostsAction } from '@module_3/exports';
-import { getUserJoinedCommunitiesAction } from '@module_3/posts/actions/post';
-import { getCurrentUserId } from '@module_1/auth/exports';
-import HomeFeed from '@module_3/posts/components/HomeFeed';
-import { Suspense } from 'react';
+import { getFeedAction } from '@module_2/feed/actions/feed.actions'
+import { HomeFeedSection } from '@module_2/feed/components/home-feed-section'
+import { getCurrentUserId } from '@module_1/auth/exports'
+import { getUserMainCommunities } from '@module_2/communities/exports'
 
 export default async function HomePage() {
-  const [posts, communities, currentUserId] = await Promise.all([
-    getPostsAction(),
-    getUserJoinedCommunitiesAction(),
-    getCurrentUserId(),
-  ]);
+  const currentUserId = await getCurrentUserId()
+
+  const [initialFeed, userCommunities] = await Promise.all([
+    getFeedAction(null),
+    currentUserId ? getUserMainCommunities(currentUserId) : Promise.resolve([]),
+  ])
 
   return (
-    <CreatePostProvider communities={communities}>
-      <div className="p-4 sm:p-8">
-        <Suspense fallback={<div className="max-w-[1000px] mx-auto p-12 text-center font-candal text-gray-custom">Cargando publicaciones...</div>}>
-          <HomeFeed initialPosts={posts} currentUserId={currentUserId} />
-        </Suspense>
+    <div className="p-4 sm:p-8">
+      <div className="max-w-[1000px] mx-auto">
+        <HomeFeedSection
+          initialFeed={initialFeed}
+          currentUserId={currentUserId}
+          userCommunityIds={userCommunities.map((c) => c.id)}
+        />
       </div>
-    </CreatePostProvider>
-  );
+    </div>
+  )
 }

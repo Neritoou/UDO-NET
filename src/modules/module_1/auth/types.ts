@@ -5,21 +5,17 @@
  * alias ni una copia, para que todos los módulos hablen del mismo contrato.
  */
 
-/** Campos de los formularios de autenticación que pueden tener un error individual. */
-export type AuthField = 'email' | 'password' | 'confirmPassword' | 'username'
-
 /**
- * Estado que los Server Actions de autenticación devuelven a los formularios.
- * Se consume con `useActionState` en los componentes cliente.
+ * Estado que el Server Action de acceso devuelve al formulario.
+ * Se consume con `useActionState` en el componente cliente.
+ *
+ * No hay errores por campo: el único formulario es un botón, y las
+ * credenciales las valida Google.
  */
 export type AuthFormState = {
-  /** Error general de la operación (credenciales inválidas, fallo de red, etc.). */
+  /** Motivo por el que no se pudo iniciar sesión, listo para mostrar. */
   error?: string
-  /** Errores de validación asociados a un campo específico del formulario. */
-  fieldErrors?: Partial<Record<AuthField, string>>
-  /** Mensaje de éxito para flujos que no redirigen (ej. confirmación de correo). */
-  message?: string
 }
 
-/** Estado inicial de los formularios de autenticación. */
+/** Estado inicial del formulario de acceso. */
 export const INITIAL_AUTH_STATE: AuthFormState = {}

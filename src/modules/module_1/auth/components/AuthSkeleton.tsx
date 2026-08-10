@@ -1,5 +1,5 @@
 /**
- * Esqueleto de carga de las pantallas de autenticación.
+ * Esqueleto de carga de la pantalla de acceso.
  * Mantiene la tarjeta de dos columnas para que no salte al cargar el formulario.
  */
 export function AuthSkeleton() {
@@ -17,15 +17,10 @@ export function AuthSkeleton() {
             <div className="h-8 w-40 rounded bg-gray-200" />
             <div className="mb-4 h-4 w-32 rounded bg-gray-200" />
 
-            {Array.from({ length: 2 }).map((_, index) => (
-              <div key={index} className="flex flex-col gap-1.5">
-                <div className="h-3 w-32 rounded bg-gray-200" />
-                <div className="h-10 rounded-full bg-blue-50" />
-              </div>
-            ))}
+            {/* Botón de acceso con Google */}
+            <div className="h-11 rounded-full bg-gray-200" />
 
-            <div className="mt-4 h-9 w-28 rounded-full bg-blue-200" />
-            <div className="mt-8 h-9 rounded-full bg-[#dbeafe]" />
+            <div className="mx-auto mt-2 h-3 w-48 rounded bg-gray-200" />
           </div>
 
           <div className="w-full bg-[#e6f0fa] lg:min-h-[600px] lg:w-[60%]" />

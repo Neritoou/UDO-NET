@@ -15,9 +15,9 @@ import MobilePanelToggle from "@module_2/communities/components/mobile-panel-tog
 import EditSubcommunity from "@/modules/module_2/communities/components/button-edit";
 import DeleteSubcommunity from "@/modules/module_2/communities/components/button-delete";
 
-import { getCommunityFeedAction } from "@/modules/module_2/feed/actions/feed.actions";
-import CommunityFeed from "@/modules/module_2/feed/components/community-feed";
 import CreatePostButton from "@/modules/module_2/feed/components/create-post-button";
+import { CommunityFeedSection } from "@/modules/module_2/feed/components/community-feed-section";
+import { getFeedAction } from "@module_2/feed/actions/feed.actions";
 
 import { getCurrentUserId } from "@module_1/auth/exports";
 
@@ -25,6 +25,8 @@ import { getUserRole } from "@module_1/profiles/exports";
 
 import Image from "next/image";
 import ShowMembers from "@/modules/module_2/communities/components/button-see-members";
+import Link from "next/link";
+import { gradients } from "@/lib/constants/communities";
 
 interface PageProps {
     params: Promise<{ slug: string; subslug: string }>;
@@ -38,14 +40,17 @@ export default async function SubcommunityPage({ params }: PageProps) {
 
     const subcommunity = await getSubcommunityBySlug(subslug, parent.id);
     if (!subcommunity) notFound();
+
+    const gradientIndex:number = subcommunity.name.length % gradients.length;
+    const selectedGradient:string = gradients[gradientIndex];
     
     const currentUserId = await getCurrentUserId();
 
-    const [memberCount, subscribed, siblings, posts, userRole, currentUsers] = await Promise.all([
+    const [memberCount, subscribed, siblings, initialFeed, userRole, currentUsers] = await Promise.all([
         getCommunityMemberCount(subcommunity.id),
         currentUserId ? isUserSubscribed(currentUserId, subcommunity.id) : Promise.resolve(false),
         getSubcommunities(parent.id),
-        getCommunityFeedAction(subcommunity.id),
+        getFeedAction(subcommunity.id),
         currentUserId ? getUserRole(currentUserId) : Promise.resolve(null),
         getCommunityMembers(subcommunity.id),
     ]);
@@ -60,7 +65,8 @@ export default async function SubcommunityPage({ params }: PageProps) {
         <div className="mx-auto max-w-7xl px-4 pb-10 sm:px-8">
 
             <div className="relative h-40 sm:h-52 -mx-4 sm:mx-0">
-                <div className="relative h-full w-full rounded-b-xl sm:rounded-xl overflow-hidden bg-gradient-to-r from-cyan-950 via-blue-950 to-indigo-950">
+                <div className={`relative h-full w-full rounded-b-xl sm:rounded-xl overflow-hidden bg-gradient-to-r ${selectedGradient}`}>
+                    <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
                     {subcommunity.banner_url && (
                         <Image
                             src={subcommunity.banner_url}
@@ -95,8 +101,11 @@ export default async function SubcommunityPage({ params }: PageProps) {
 
 
             <section className="mt-12 sm:mt-14 px-1 sm:px-2 min-w-0 max-w-full">
-                <span className="font-candal font-normal text-extra-small text-alpha-black">
-                    Subcomunidad de {parent.name}
+                <span className="font-candal font-normal text-extra-small text-slate-500">
+                    Subcomunidad de 
+                    <Link href={`/communities/${parent.slug}`} className="ml-1 text-slate-700 hover:text-slate-800 hover:underline transition-colors">
+                        {parent.name}
+                    </Link>
                 </span>
 
                 <div className="flex flex-col gap-2">
@@ -132,7 +141,11 @@ export default async function SubcommunityPage({ params }: PageProps) {
             <div className="mt-8 grid grid-cols-12 gap-8">
 
             <section className="col-span-12 lg:col-span-8">
-                <CommunityFeed posts={posts} currentUserId={currentUserId} />
+                <CommunityFeedSection
+                    initialFeed={initialFeed}
+                    communityId={subcommunity.id}
+                    currentUserId={currentUserId}
+                />
             </section>
 
             <aside className="lg:col-span-4">

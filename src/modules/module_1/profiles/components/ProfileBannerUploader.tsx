@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { IMAGE_PRESETS, resizeImage, validateImage } from "@/lib/storage/client";
 import { updateBannerAction } from "../actions/profile.actions";
 
 interface ProfileBannerUploaderProps {
@@ -17,25 +18,48 @@ export function ProfileBannerUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const bannerBg = previewUrl || initialBannerUrl || "/udo-arch.jpg";
+  const preset = IMAGE_PRESETS.userBanner;
+  const bannerBg = previewUrl || initialBannerUrl || preset.defaultUrl;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const localPreview = URL.createObjectURL(file);
-    setPreviewUrl(localPreview);
+    setErrorMsg(null);
+
+    const validationError = await validateImage(file, preset);
+    if (validationError) {
+      setErrorMsg(validationError);
+      e.target.value = "";
+      return;
+    }
+
+    let optimized: File;
+    try {
+      const blob = await resizeImage(file, preset.dimensions);
+      optimized = new File([blob], "banner.webp", { type: "image/webp" });
+    } catch {
+      setErrorMsg("No se pudo procesar la imagen.");
+      e.target.value = "";
+      return;
+    }
+
+    setPreviewUrl(URL.createObjectURL(optimized));
 
     const formData = new FormData();
-    formData.append("banner", file);
+    formData.append("banner", optimized);
 
     startTransition(async () => {
       const res = await updateBannerAction({}, formData);
-      if (res?.error) {
+      if (res?.error || res?.fieldErrors?.banner) {
+        setErrorMsg(res.error || res.fieldErrors?.banner || "Error al subir la imagen.");
         setPreviewUrl(null);
       }
     });
+
+    e.target.value = "";
   };
 
   return (
@@ -43,7 +67,7 @@ export function ProfileBannerUploader({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept={preset.allowedTypes.join(",")}
         className="hidden"
         onChange={handleFileChange}
         aria-label="Cambiar foto de portada"
@@ -57,18 +81,6 @@ export function ProfileBannerUploader({
         onClick={() => isOwnProfile && !isPending && fileInputRef.current?.click()}
         title={isOwnProfile ? "Haz clic para cambiar la portada del perfil" : undefined}
       >
-        {/* Dark overlay for contrast */}
-        <div className="absolute inset-0 bg-[#0f2748]/60 transition-colors group-hover:bg-[#0f2748]/45" aria-hidden="true" />
-
-        {/* UDO watermark */}
-        <span
-          className="absolute inset-0 flex select-none items-center justify-center text-[7rem] font-extrabold leading-none text-white/15 md:text-[10rem]"
-          aria-hidden="true"
-        >
-          UDO
-        </span>
-
-        {/* Hover Camera Overlay Button for Banner */}
         {isOwnProfile && (
           <div className="absolute top-4 right-4 z-20 flex items-center gap-2 rounded-xl bg-white/90 px-3.5 py-1.5 backdrop-blur-sm shadow-md transition-all duration-200 group-hover:bg-white group-hover:shadow-lg opacity-90 group-hover:opacity-100">
             <svg
@@ -87,6 +99,10 @@ export function ProfileBannerUploader({
           </div>
         )}
       </div>
+
+      {errorMsg && (
+        <p className="px-4 pt-2 text-xs font-semibold text-red-600">{errorMsg}</p>
+      )}
 
       {children}
     </header>

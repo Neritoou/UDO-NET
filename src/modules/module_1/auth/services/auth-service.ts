@@ -3,6 +3,10 @@ import { createClient } from '@/lib/db/server'
 /**
  * Capa de acceso a Supabase Auth.
  *
+ * La única forma de entrar al foro es con una cuenta de Google (OAuth). No hay
+ * contraseñas propias: Supabase guarda la identidad y nosotros solo canjeamos
+ * el código que devuelve Google por una sesión en cookies.
+ *
  * Solo se ejecuta en el servidor: todas las funciones usan el cliente de
  * `@/lib/db/server`, que lee y escribe la sesión en las cookies de la petición.
  * Ningún componente cliente debe importar este archivo.
@@ -12,21 +16,11 @@ import { createClient } from '@/lib/db/server'
 export type AuthIdentity = {
   id: string
   email: string
-  /**
-   * Nombre de usuario que se eligió al registrarse y todavía no se ha aplicado
-   * al perfil. Ver `PENDING_USERNAME_KEY`.
-   */
-  pendingUsername: string | null
+  /** Nombre completo tal como lo comparte Google, o `null` si no vino. */
+  fullName: string | null
+  /** Foto de la cuenta de Google, o `null` si no tiene. */
+  avatarUrl: string | null
 }
-
-/**
- * Clave donde se guarda el nombre elegido en el registro.
- *
- * Hace falta porque, si el proyecto exige confirmar el correo, al registrarse
- * todavía no hay sesión y no se puede escribir en la tabla `users`. El nombre
- * viaja en los metadatos de Auth y se aplica en el primer inicio de sesión.
- */
-const PENDING_USERNAME_KEY = 'pending_username'
 
 /**
  * Traduce los errores de Supabase Auth a mensajes en español.
@@ -37,29 +31,31 @@ const PENDING_USERNAME_KEY = 'pending_username'
 function translateAuthError(message: string): string {
   const normalized = message.toLowerCase()
 
-  if (normalized.includes('invalid login credentials')) {
-    return 'El correo o la contraseña son incorrectos.'
+  if (normalized.includes('provider is not enabled') || normalized.includes('unsupported provider')) {
+    return 'El inicio de sesión con Google no está habilitado. Avisa a un administrador.'
   }
-  if (normalized.includes('email not confirmed')) {
-    return 'Debes confirmar tu correo antes de iniciar sesión.'
-  }
-  if (normalized.includes('user already registered') || normalized.includes('already been registered')) {
-    return 'Ya existe una cuenta registrada con ese correo.'
-  }
-  if (normalized.includes('should be different')) {
-    return 'La contraseña nueva debe ser distinta de la anterior.'
-  }
-  if (normalized.includes('password should be')) {
-    return 'La contraseña no cumple con los requisitos mínimos de seguridad.'
-  }
-  if (normalized.includes('auth session missing') || normalized.includes('session_not_found')) {
-    return 'Tu enlace de recuperación caducó. Solicita uno nuevo.'
+  if (normalized.includes('redirect') && normalized.includes('not allowed')) {
+    return 'La dirección de retorno no está autorizada en el servidor. Avisa a un administrador.'
   }
   if (normalized.includes('rate limit') || normalized.includes('too many requests')) {
     return 'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.'
   }
 
   return 'No se pudo completar la operación. Inténtalo de nuevo.'
+}
+
+/**
+ * Lee el primer valor de texto disponible entre varias claves de los metadatos.
+ *
+ * Google no siempre manda las mismas: el nombre llega como `full_name` o
+ * `name`, y la foto como `avatar_url` o `picture`, según la cuenta.
+ */
+function readMetadata(metadata: Record<string, unknown> | undefined, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = metadata?.[key]
+    if (typeof value === 'string' && value.length > 0) return value
+  }
+  return null
 }
 
 /**
@@ -72,19 +68,14 @@ export async function getAuthIdentity(): Promise<AuthIdentity | null> {
 
   if (error || !data.user?.email) return null
 
-  const pending = data.user.user_metadata?.[PENDING_USERNAME_KEY]
+  const metadata = data.user.user_metadata
 
   return {
     id: data.user.id,
     email: data.user.email,
-    pendingUsername: typeof pending === 'string' && pending.length > 0 ? pending : null,
+    fullName: readMetadata(metadata, ['full_name', 'name']),
+    avatarUrl: readMetadata(metadata, ['avatar_url', 'picture']),
   }
-}
-
-/** Borra el nombre pendiente una vez aplicado, para no reescribirlo en cada sesión. */
-export async function clearPendingUsername(): Promise<void> {
-  const supabase = await createClient()
-  await supabase.auth.updateUser({ data: { [PENDING_USERNAME_KEY]: null } })
 }
 
 /** Devuelve solo el id del usuario autenticado, o `null` si no hay sesión. */
@@ -93,98 +84,59 @@ export async function getAuthUserId(): Promise<string | null> {
   return identity?.id ?? null
 }
 
-/** Inicia sesión con correo y contraseña. La sesión queda guardada en cookies. */
-export async function signInWithPassword(
-  email: string,
-  password: string
-): Promise<{ userId: string; email: string } | { error: string }> {
-  const supabase = await createClient()
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-
-  if (error) return { error: translateAuthError(error.message) }
-  if (!data.user?.email) return { error: 'No se pudo iniciar sesión. Inténtalo de nuevo.' }
-
-  return { userId: data.user.id, email: data.user.email }
-}
-
 /**
- * Registra una cuenta nueva en Supabase Auth.
+ * Prepara el inicio de sesión con Google y devuelve la URL a la que hay que
+ * enviar al usuario.
  *
- * `hasSession` es `false` cuando el proyecto exige confirmar el correo: en ese
- * caso el usuario existe pero todavía no puede navegar autenticado.
+ * No redirige por su cuenta: quien la llame decide cómo navegar.
+ *
+ * (!) Solo puede llamarse desde un Server Action o un Route Handler. El flujo
+ * PKCE guarda un verificador en una cookie, y un Server Component no puede
+ * escribir cookies: desde ahí el canje posterior del código fallaría.
+ *
+ * `callbackUrl` debe ser absoluta y estar en las *Redirect URLs* del proyecto
+ * de Supabase, o Google devolverá al usuario con un error.
  */
-export async function signUpWithPassword(
-  email: string,
-  password: string,
-  username: string
-): Promise<{ userId: string; hasSession: boolean } | { error: string }> {
+export async function signInWithGoogle(
+  callbackUrl: string
+): Promise<{ url: string } | { error: string }> {
   const supabase = await createClient()
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
     options: {
-      // `username` es por si el proyecto tiene un trigger que crea la fila de
-      // `users` y lee ese campo; `pending_username` es nuestro respaldo para
-      // aplicarlo en el primer inicio de sesión si el trigger lo ignoró.
-      data: { username, [PENDING_USERNAME_KEY]: username },
+      redirectTo: callbackUrl,
+      // Fuerza el selector de cuentas en lugar de entrar con la última sesión
+      // de Google del navegador: en un laboratorio se comparte la computadora.
+      queryParams: { prompt: 'select_account' },
     },
   })
 
   if (error) return { error: translateAuthError(error.message) }
-  if (!data.user) return { error: 'No se pudo crear la cuenta. Inténtalo de nuevo.' }
+  if (!data.url) return { error: 'No se pudo conectar con Google. Inténtalo de nuevo.' }
 
-  return { userId: data.user.id, hasSession: data.session !== null }
+  return { url: data.url }
+}
+
+/**
+ * Canjea el código que devuelve Google por una sesión guardada en cookies.
+ *
+ * Solo puede llamarse desde un Route Handler: es la única parte de Next.js que
+ * puede escribir las cookies de sesión al atender el retorno desde Google.
+ */
+export async function exchangeCodeForSession(
+  code: string
+): Promise<{ error: string } | null> {
+  const supabase = await createClient()
+  const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+  if (error) {
+    return { error: 'No se pudo completar el inicio de sesión con Google. Inténtalo de nuevo.' }
+  }
+  return null
 }
 
 /** Cierra la sesión actual y limpia las cookies de autenticación. */
 export async function signOut(): Promise<void> {
   const supabase = await createClient()
   await supabase.auth.signOut()
-}
-
-/**
- * Envía el correo con el enlace para restablecer la contraseña.
- *
- * `redirectTo` debe ser una URL absoluta y estar en la lista de URLs
- * permitidas del proyecto de Supabase, o el enlace del correo no funcionará.
- */
-export async function sendPasswordResetEmail(
-  email: string,
-  redirectTo: string
-): Promise<{ error: string } | null> {
-  const supabase = await createClient()
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
-
-  if (error) return { error: translateAuthError(error.message) }
-  return null
-}
-
-/**
- * Canjea el token del correo de recuperación por una sesión temporal.
- *
- * Solo puede llamarse desde un Route Handler: es la única parte de Next.js que
- * puede escribir las cookies de sesión al atender el clic desde el correo.
- */
-export async function verifyRecoveryToken(
-  tokenHash: string
-): Promise<{ error: string } | null> {
-  const supabase = await createClient()
-  const { error } = await supabase.auth.verifyOtp({
-    type: 'recovery',
-    token_hash: tokenHash,
-  })
-
-  if (error) return { error: 'El enlace no es válido o ya caducó. Solicita uno nuevo.' }
-  return null
-}
-
-/** Cambia la contraseña del usuario con sesión activa. */
-export async function updateUserPassword(
-  password: string
-): Promise<{ error: string } | null> {
-  const supabase = await createClient()
-  const { error } = await supabase.auth.updateUser({ password })
-
-  if (error) return { error: translateAuthError(error.message) }
-  return null
 }

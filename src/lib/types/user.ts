@@ -5,6 +5,7 @@ export type User = {
   email: string
   username: string
   avatar_url: string | null
+  banner_url: string | null
   bio: string | null
   is_public: boolean
   role: UserRole

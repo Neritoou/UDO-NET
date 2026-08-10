@@ -8,6 +8,7 @@ export {
   isUserSubscribed,
   getCommunityMemberCount,
   getCommunityMembers,
+  joinCommunity
 } from './services/community.service'
 
 export { GetCommunitiesSC, GetSubcommunitiesSC } from './components/get-communities-svr'

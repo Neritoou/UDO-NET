@@ -9,4 +9,3 @@ export { CreatePostProvider, useCreatePost } from '@module_3/posts/context/Creat
 export { default as PostList } from '@module_3/posts/components/PostList';
 export { default as ThreadView } from '@module_3/posts/components/ThreadView';
 export { getPostsByUserAction } from './actions/post';
-

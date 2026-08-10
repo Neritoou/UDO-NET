@@ -22,6 +22,9 @@ export type UnifiedPost = Omit<Post, 'status'> & {
   author: DatabaseUser;
   community?: Community;
   community_name?: string;
+  community_slug?: string;
+  community_parent_slug?: string | null;
+  community_parent_name?: string | null;
   tags: string[];
   links: DatabasePostLink[];
   replies: DatabaseReply[];

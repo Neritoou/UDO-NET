@@ -11,10 +11,10 @@ import { GetSubcommunitiesSC } from "@module_2/communities/components/get-commun
 import JoinCommunityComponent from "@module_2/communities/components/button-join";
 import LeaveCommunityComponent from "@module_2/communities/components/button-leave";
 
-import { getCommunityFeedAction } from "@/modules/module_2/feed/actions/feed.actions";
-import CommunityFeed from "@/modules/module_2/feed/components/community-feed";
 import CreatePostButton from "@/modules/module_2/feed/components/create-post-button";
 import EditSubcommunity from "@/modules/module_2/communities/components/button-edit";
+import { CommunityFeedSection } from "@/modules/module_2/feed/components/community-feed-section";
+import { getFeedAction } from "@module_2/feed/actions/feed.actions";
 
 import { getCurrentUserId } from "@module_1/auth/exports";
 import Image from "next/image";
@@ -38,10 +38,10 @@ export default async function CommunityPage({ params }: PageProps) {
 
     const currentUserId = await getCurrentUserId();
 
-    const [memberCount, subscribed, posts, currentUsers, userRole] = await Promise.all([
+    const [memberCount, subscribed, initialFeed, currentUsers, userRole] = await Promise.all([
         getCommunityMemberCount(community.id),
         currentUserId ? isUserSubscribed(currentUserId, community.id) : Promise.resolve(false),
-        getCommunityFeedAction(community.id),
+        getFeedAction(community.id),
         getCommunityMembers(community.id),
         currentUserId ? getUserRole(currentUserId) : Promise.resolve(null)
     ]);
@@ -54,6 +54,7 @@ export default async function CommunityPage({ params }: PageProps) {
 
                 <div className="relative h-40 sm:h-52 -mx-4 sm:mx-0">
                     <div className={`relative h-full w-full rounded-b-xl sm:rounded-xl overflow-hidden bg-gradient-to-r ${selectedGradient}`}>
+                        <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-20" />
                         {community.banner_url && (
                         <Image
                             src={community.banner_url}
@@ -123,7 +124,11 @@ export default async function CommunityPage({ params }: PageProps) {
             <div className="mt-8 grid grid-cols-12 lg:gap-8 gap-4">
 
             <section className="col-span-12 lg:col-span-8">
-                <CommunityFeed posts={posts} currentUserId={currentUserId} />
+                <CommunityFeedSection
+                    initialFeed={initialFeed}
+                    communityId={community.id}
+                    currentUserId={currentUserId}
+                />
             </section>
 
             <aside className="lg:col-span-4">

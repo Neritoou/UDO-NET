@@ -36,7 +36,6 @@ export {
 
 // --- Avatares ---
 export { DEFAULT_AVATAR_URL, resolveAvatarUrl } from './utils/avatar'
-export { cleanupUserImages } from './services/storage-service'
 
 // --- Server Actions ---
 export {

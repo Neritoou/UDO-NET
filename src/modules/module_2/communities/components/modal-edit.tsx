@@ -66,10 +66,10 @@ export default function ModalEditSubCommunity({ community, subcommunity, isOpen,
 
         startTransition(async () => {
             try {
+                if(name.length < MIN_NAME_LENGTH || descripcion.length < MIN_DESCRIPTION_LENGTH) return;
+                
                 const communityId:string = !subcommunity ? community.id : subcommunity.id 
                 const result = await updateSubcommunityAction(communityId, name, descripcion);
-
-                if(name.length < MIN_NAME_LENGTH || descripcion.length < MIN_DESCRIPTION_LENGTH) return;
 
                 if (result.error) {
                     setMsgErrSrv(result.error || "Error al actualizar la subcomunidad.");
@@ -309,13 +309,13 @@ export default function ModalEditSubCommunity({ community, subcommunity, isOpen,
                         ?
                         `Modificando ${community.name}`
                         :
-                        `Modificando ${subcommunity.name} dentro de ${community.name}`
+                        `Modificando ${subcommunity.name}`
                         }
                     </h2>
                     <button className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-full hover:bg-gray-100" onClick={() => { 
                         setIsOpen(false); setMsgErr(ERR_DATA_FORM); setMsgErrSrv(""); 
-                        setBannerPreview(!subcommunity ? community.icon_url : subcommunity.icon_url); 
-                        setPhotoPreview(!subcommunity ? community.banner_url : subcommunity.banner_url);
+                        setBannerPreview(!subcommunity ? community.banner_url : subcommunity.banner_url); 
+                        setPhotoPreview(!subcommunity ? community.icon_url  : subcommunity.icon_url);
                         setName(!subcommunity ? community.name : subcommunity.name); 
                         setDescription(!subcommunity ? community.description : subcommunity.description); }}>
                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
