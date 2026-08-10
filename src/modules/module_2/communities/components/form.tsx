@@ -76,11 +76,10 @@ export default function FormCreateSubCommunity({ isOpen, setIsOpen, parentId, pa
 
         startTransition(async () => {
             try{
-
-                const result = await createSubcommunityAction(formData.name_community, formData.description_community, parentId);
-
                 if(formData.name_community.length < MIN_NAME_LENGTH || formData.description_community.length < MIN_DESCRIPTION_LENGTH) return;
 
+                const result = await createSubcommunityAction(formData.name_community, formData.description_community, parentId);
+                
                 if(result.error){
                     setMsgErrSrv(result.error);
                     return;
