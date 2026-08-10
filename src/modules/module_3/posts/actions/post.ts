@@ -175,8 +175,9 @@ export async function createPostAction(formData: FormData | {
     });
 
     if (result.success) {
-      revalidatePath("/");
+      revalidatePath("/", "layout");
     }
+    
     return result;
   } catch (error) {
     return { success: false, error: "Error interno al conectar con la base de datos." };
