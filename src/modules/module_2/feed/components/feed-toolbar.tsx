@@ -13,22 +13,20 @@ const sortOptions: { value: SortOption; label: string }[] = [
 ]
 
 interface FeedToolbarProps {
-  /** Filtro aplicado al cambiar. */
   onFilterChange: (filter: FeedFilter) => void
-  /** Si muestra botón de crear hilo. */
   showCreateButton?: boolean
-  /** Si muestra toggle "Solo mis comunidades" (solo en home). */
   userCommunityIds?: string[]
-  /** Texto del placeholder de búsqueda. */
   searchPlaceholder?: string
+  /** Comunidad o subcomunidad actual, para preseleccionarla al crear un hilo. */
+  communityId?: string | null
 }
 
-/** Barra de búsqueda + filtros + crear hilo. */
 export function FeedToolbar({
   onFilterChange,
   showCreateButton = false,
   userCommunityIds,
   searchPlaceholder = 'Buscar publicaciones...',
+  communityId,
 }: FeedToolbarProps) {
   const [sort, setSort] = useState<SortOption>('hot')
   const [searchText, setSearchText] = useState('')
@@ -77,6 +75,10 @@ export function FeedToolbar({
     buildAndEmit({ onlyMine: newValue })
   }
 
+  const handleOpenCreatePost = () => {
+    openCreatePost(communityId ? { communityId } : undefined)
+  }
+
   const currentSortLabel = sortOptions.find((o) => o.value === sort)?.label ?? 'Populares'
 
   return (
@@ -86,7 +88,7 @@ export function FeedToolbar({
         {showCreateButton && (
           <button
             type="button"
-            onClick={() => openCreatePost()}
+            onClick={handleOpenCreatePost}
             className="h-[42px] px-5 bg-regular-blue text-pure-white font-candal text-p rounded-full border-0 hover:bg-dark-main-blue transition cursor-pointer active:scale-95 flex items-center gap-2 shrink-0"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,7 +178,7 @@ export function FeedToolbar({
           {showCreateButton && (
             <button
               type="button"
-              onClick={() => openCreatePost()}
+              onClick={handleOpenCreatePost}
               className="h-[38px] w-[38px] bg-regular-blue text-pure-white rounded-full border-0 hover:bg-dark-main-blue transition cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
