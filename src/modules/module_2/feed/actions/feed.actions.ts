@@ -4,14 +4,7 @@ import { getFeedPosts } from '../services/feed.service'
 import { getUserFeedPosts } from '../services/user.feed.service'
 import type { PaginatedFeed, FeedFilter } from '../types'
 
-/**
- * Obtiene el feed paginado, rankeado y filtrado.
- *
- * - communityId null → feed global
- * - communityId con valor → feed de comunidad/subcomunidad
- * - page → número de página (nextCursor del batch anterior)
- * - filter → filtros opcionales (sort, search, tag, userCommunityIds)
- */
+/** Obtiene el feed paginado, rankeado y filtrado. */
 export async function getFeedAction(
   communityId?: string | null,
   page?: string | null,
@@ -26,12 +19,7 @@ export async function getFeedAction(
 }
  
 
-/**
- * Obtiene posts de un usuario específico, paginados por fecha.
- *
- * Se usa en el perfil de usuario para mostrar sus publicaciones
- * con carga bajo demanda.
- */
+/** Obtiene posts de un usuario específico, paginados por fecha. */
 export async function getUserFeedAction(
   userId: string,
   page?: string | null

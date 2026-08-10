@@ -14,7 +14,7 @@ export default function MobilePanelToggle({ title, children }: MobilePanelToggle
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="lg:hidden fixed bottom-5 right-5 z-40 px-4 py-2.5 bg-regular-blue hover:bg-dark-main-blue active:scale-95 text-pure-white text-sm font-semibold rounded-full shadow-lg transition-all"
+        className="lg:hidden fixed bottom-3 right-3 z-40 px-4 py-2.5 bg-regular-blue hover:bg-dark-main-blue active:scale-95 text-pure-white text-sm font-semibold rounded-full shadow-lg transition-all"
       >
         {title}
       </button>

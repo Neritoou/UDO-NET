@@ -1,11 +1,10 @@
 'use client';
-
-import React, { useState, useTransition } from 'react';
+import Link from 'next/link';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { getThread } from '@module_3/posts/actions/thread';
 import { addReplyAction } from '@module_3/posts/actions/reply';
 import VoteManager from '@module_4/votes/components/VoteManager';
-import UserBadge from '@module_4/reputation/components/UserBadge';
 import { UnifiedPost, DatabaseReply } from '@module_3/posts/services/supabase-service';
 import UserAvatar from '../../components/UserAvatar';
 import Toast from '../../components/Toast';
@@ -151,9 +150,11 @@ function ReplyItem({ reply, postId, onAddReply, onShowToast, parentAuthorName, c
       {/* Cabecera del Autor (usuario • fecha en una misma línea) */}
       <div className="flex items-center gap-2 mb-2 font-candal font-normal text-tiny text-alpha-black flex-wrap">
         <UserAvatar avatarUrl={reply.author?.avatar_url} username={reply.author?.username || 'Anónimo'} size="w-7 h-7" />
-        <strong className="text-main-black font-candal font-normal text-p">
-          {reply.author?.username || 'Anónimo'}
-        </strong>
+        <Link href={`/profile/${reply.author?.username}`}>
+          <strong className="text-main-black font-candal font-normal text-p hover:text-blue-500">
+            {reply.author?.username || 'Anónimo'}
+          </strong>
+        </Link>
         <span>•</span>
         <span>{new Date(reply.created_at).toLocaleDateString()}</span>
 

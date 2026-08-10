@@ -1,13 +1,20 @@
-'use client'
-
 import { IMAGE_PRESETS } from '@/lib/storage/presets';
 import type { User } from '@/lib/types';
 import Image from "next/image";
 import Link from "next/link";
 import { Dispatch, SetStateAction } from 'react';
-import Dropdown from './dropdown-members';
+import Dropdown from "@module_2/communities/components/dropdown-members";
 
-export default function ModalMembersCommunity({ currentUsers, isOpen, setIsOpen, communityName }:{ currentUsers:User[], isOpen:boolean, setIsOpen:Dispatch<SetStateAction<boolean>>, communityName:string }){
+interface IMembersCommunity{
+    currentUsers: User[];
+    isOpen: boolean;
+    setIsOpen: Dispatch<SetStateAction<boolean>>;
+    communityName: string;
+    communityId: string;
+    subscribed: boolean
+};
+
+export default function ModalMembersCommunity({ currentUsers, isOpen, setIsOpen, communityName, communityId, subscribed }:IMembersCommunity){
     if(!isOpen) return null;
 
     return(
@@ -50,8 +57,9 @@ export default function ModalMembersCommunity({ currentUsers, isOpen, setIsOpen,
                                             >
                                                 {profile.username}
                                             </Link>
-
-                                            <Dropdown profile={profile}/>
+                                            {subscribed && 
+                                                <Dropdown profile={profile} communityId={communityId} />
+                                            }
                                         </div>
 
                                         <p className="text-xs text-[#6b7280]">

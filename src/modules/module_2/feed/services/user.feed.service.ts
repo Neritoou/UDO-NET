@@ -1,14 +1,9 @@
 import { createClient } from '@/lib/db/server'
 import type { FeedPost, PaginatedFeed } from '../types'
 
-const USER_FEED_PAGE_SIZE = 2
+const USER_FEED_PAGE_SIZE = 10
 
-/**
- * Trae posts de un usuario específico, paginados por fecha descendente.
- *
- * No usa hot score — el perfil muestra posts del usuario ordenados
- * cronológicamente (más reciente primero).
- */
+/** Trae posts de un usuario específico, paginados por fecha descendente. */
 export async function getUserFeedPosts(
   userId: string,
   page: number = 0,
@@ -29,6 +24,7 @@ export async function getUserFeedPosts(
       author:users!posts_author_id_fkey(id, username, avatar_url),
       community:communities!posts_community_id_fkey(name, slug, parent_id),
       post_tags(tag:tags(name)),
+      links:post_links(id, url, title, description, image_url, created_at),
       replies(id)
     `)
     .eq('author_id', userId)
@@ -71,6 +67,7 @@ export async function getUserFeedPosts(
     const community = post.community as { name: string; slug: string; parent_id: string | null } | null
     const postTags = post.post_tags as Array<{ tag: { name: string } | null }> | null
     const replies = post.replies as Array<{ id: string }> | null
+    const postLinks = post.links as Array<{ id: string; url: string; title: string | null; description: string | null; image_url: string | null; created_at: string }> | null
 
     return {
       id: post.id as string,
@@ -90,6 +87,7 @@ export async function getUserFeedPosts(
         : null,
       author: author ?? { id: '', username: 'Anónimo', avatar_url: null },
       tags: postTags?.map((pt) => pt.tag?.name).filter((name): name is string => Boolean(name)) ?? [],
+      links: postLinks ?? [],
       replies_count: replies?.length ?? 0,
     }
   })

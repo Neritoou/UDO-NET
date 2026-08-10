@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect} from "react";
 import { createPostAction, getUserJoinedCommunitiesAction, getCurrentUserDisplayAction, CommunityOption } from "@module_3/posts/actions/post";
 import { getLinkMetadata } from "@module_3/posts/actions/links";
 import { isValidUrl } from "../actions/validateUrl";

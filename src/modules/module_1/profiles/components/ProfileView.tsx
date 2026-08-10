@@ -41,7 +41,7 @@ export async function ProfileView({ username }: { username?: string }) {
   return (
     <div className="min-h-screen bg-[#f3f4f6] px-4 py-6">
       <div className="mx-auto flex max-w-5xl flex-col gap-6">
-        <ProfileHeader profile={publicProfile} isOwnProfile={isOwnProfile} />
+        <ProfileHeader profile={publicProfile} isOwnProfile={false} />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <aside className="flex flex-col gap-5 lg:col-span-4">

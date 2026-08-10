@@ -114,3 +114,30 @@ export async function getUnreadNotificationCount(userId: string): Promise<number
   if (error) return 0
   return count ?? 0
 }
+
+/**
+ * Marca notificaciones como leídas para un usuario específico.
+ *
+ * Si se proveen `notificationIds`, solo actualiza esos registros.
+ * Si el arreglo está ausente o vacío, marca todas las no leídas del usuario.
+ *
+ * @param userId - UUID del usuario dueño de las notificaciones.
+ * @param notificationIds - Arreglo opcional de IDs a marcar como leídas.
+ * @returns `true` si la actualización tuvo éxito, `false` en caso de error.
+ */
+export async function markNotificationsRead(userId: string, notificationIds?: string[]): Promise<boolean> {
+  const supabase = await createClient()
+
+  let query = supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .eq('user_id', userId)
+    .eq('is_read', false)
+
+  if (notificationIds && notificationIds.length > 0) {
+    query = query.in('id', notificationIds)
+  }
+
+  const { error } = await query
+  return !error
+}
