@@ -4,7 +4,7 @@ import React, { useState, useCallback, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Notification } from '@/lib/types/notification';
 import NotificationItem from './NotificationItem';
-import { markNotificationsAsRead } from '@/modules/module_4/notifications/actions/notifications.actions';
+import { markNotificationsAsRead, getUserNotificationsAction } from '@/modules/module_4/notifications/actions/notifications.actions';
 
 /**
  * Props del componente NotificationDropdown.
@@ -28,6 +28,10 @@ interface NotificationDropdownProps {
  * desde un componente padre de tipo Server Component. Las interacciones del usuario
  * (marcar como leída) se manejan mediante una Server Action dedicada, con actualizaciones
  * optimistas del estado local para garantizar una respuesta inmediata en la UI.
+ *
+ * Además, hace polling cada 15s (Server Action `getUserNotificationsAction`) para
+ * detectar notificaciones nuevas sin depender de revalidatePath ni de que el usuario
+ * navegue de ruta.
  */
 export default function NotificationDropdown({ initialNotifications }: NotificationDropdownProps) {
   const router = useRouter();
@@ -107,6 +111,20 @@ export default function NotificationDropdown({ initialNotifications }: Notificat
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  /**
+   * Refresca las notificaciones cada 15s mediante polling.
+   * No pisa el estado si el dropdown está abierto, para no perder la selección del usuario a mitad de lectura.
+   */
+  React.useEffect(() => {
+    const interval = setInterval(async () => {
+      if (isOpen) return;
+      const fresh = await getUserNotificationsAction(20);
+      setNotifications(fresh);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [isOpen]);
 
   return (
     <div ref={dropdownRef} className="relative">
