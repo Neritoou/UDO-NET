@@ -187,6 +187,7 @@ export function PostCard({
         {post.title}
       </h2>
 
+      <hr className="border-1 border-t-1 border-white-gray -mx-4 sm:-mx-6 mb-3 sm:mb-4" />
 
       {/* Autor — clickeable */}
       <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 min-w-0 ${isCompact ? 'mb-2.5' : 'mb-3 sm:mb-4'}`}>
