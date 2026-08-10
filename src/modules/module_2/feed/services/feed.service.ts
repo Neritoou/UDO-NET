@@ -2,12 +2,10 @@ import { createClient } from '@/lib/db/server'
 import { MaxHeap } from '../utils/max-heap'
 import type { FeedPost, PaginatedFeed, FeedFilter } from '../types'
 
-const FEED_PAGE_SIZE = 2
+const FEED_PAGE_SIZE = 10
 const MAX_CANDIDATES = 200
 
-/**
- * Hot score: log10(replies + 1) + seconds / 45000
- */
+/** Hot score: log10(replies + 1) + seconds / 45000 */
 function computeHotScore(repliesCount: number, createdAt: string): number {
   const order = Math.log10(repliesCount + 1)
   const seconds = new Date(createdAt).getTime() / 1000
@@ -46,6 +44,7 @@ export async function getFeedPosts(
       author:users!posts_author_id_fkey(id, username, avatar_url),
       community:communities!posts_community_id_fkey(name, slug, parent_id),
       post_tags(tag:tags(name)),
+      links:post_links(id, url, title, description, image_url, created_at),
       replies(id)
     `)
     .eq('is_hidden', false)
@@ -108,6 +107,7 @@ export async function getFeedPosts(
     const community = post.community as { name: string; slug: string; parent_id: string | null } | null
     const postTags = post.post_tags as Array<{ tag: { name: string } | null }> | null
     const replies = post.replies as Array<{ id: string }> | null
+    const postLinks = post.links as Array<{ id: string; url: string; title: string | null; description: string | null; image_url: string | null; created_at: string }> | null
 
     return {
       id: post.id as string,
@@ -127,6 +127,7 @@ export async function getFeedPosts(
         : null,
       author: author ?? { id: '', username: 'Anónimo', avatar_url: null },
       tags: postTags?.map((pt) => pt.tag?.name).filter((name): name is string => Boolean(name)) ?? [],
+      links: postLinks ?? [],
       replies_count: replies?.length ?? 0,
     }
   })
