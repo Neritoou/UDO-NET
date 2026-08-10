@@ -18,6 +18,7 @@ export default async function HomePage() {
           initialFeed={initialFeed}
           currentUserId={currentUserId}
           userCommunityIds={userCommunities.map((c) => c.id)}
+          isAuthenticated={!!currentUserId}
         />
       </div>
     </div>
