@@ -38,18 +38,13 @@ function toUnifiedPost(post: FeedPost): UnifiedPost {
     },
     tags: post.tags,
     replies: [],
-    links: [],
+    links: post.links.map((l) => ({ ...l, post_id: post.id })),
     replies_count: post.replies_count,
     votes_count: 0,
   }
 }
 
-/**
- * Sección del feed para el perfil de usuario.
- *
- * Muestra posts del usuario con carga bajo demanda.
- * No usa hot score — ordena por fecha descendente.
- */
+/** Sección del feed para el perfil de usuario. */
 export function UserFeedSection({
   initialFeed,
   userId,
