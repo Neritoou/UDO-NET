@@ -15,11 +15,7 @@ type FeedContainerProps = {
   endMessage?: string
 }
 
-/**
- * Contenedor genérico del feed con carga bajo demanda.
- *
- * Reutilizable: comunidades, subcomunidades, feed global, perfil de usuario.
- */
+/** Contenedor genérico del feed con carga bajo demanda. */
 export function FeedContainer({
   initialData,
   loadMoreAction,
@@ -62,7 +58,7 @@ export function FeedContainer({
       ))}
 
       {hasMore ? (
-        <div className="flex flex-col items-center gap-2 pt-2">
+        <div className="flex flex-col items-center gap-2">
           {isPending ? (
             <div className="flex items-center gap-3 py-2">
               <div className="w-5 h-5 border-3 border-regular-blue border-t-transparent rounded-full animate-spin" />
