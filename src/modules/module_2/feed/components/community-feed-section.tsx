@@ -109,6 +109,7 @@ export function CommunityFeedSection({
         onFilterChange={handleFilterChange}
         showCreateButton={canCreate}
         searchPlaceholder={searchPlaceholder}
+        communityId={communityId}
       />
 
       {isFiltering ? (
